@@ -6,6 +6,7 @@ Projet Ecole des Mines de PARIS en partenariat avec E_Cube :
 - *Pierre-Adrien Plessix*
 - *Youri Tchouboukoff*
 
+to install useful Paskages type : `pip install -r setup.py`
 ## Partie 1
 -------------------
 ## Partie 2
