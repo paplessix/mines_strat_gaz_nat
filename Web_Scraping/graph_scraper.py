@@ -7,9 +7,17 @@ import time
 import datetime
 
 
-def graph_scraper(link ="https://www.powernext.com/futures-market-data" : str ):
+def graph_scraper(link ="https://www.powernext.com/futures-market-data"  ):
     """Function that determine the last price of GNL in a graph
     Still need to do multiple type of GNL and more than one day (probleme des WE )
+    For now just catch he last value but could catch all the values 
+    In order to unify with table_scraper.py
+    Return : 
+        - title : str ( maybe useless)
+        - info : str ( type of price and unit change this ? )
+        - active : str ( the type of GNL)
+        - data : pd.DataFrame ()
+
     """
 
     # Find yesterday's date 
