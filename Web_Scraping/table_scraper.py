@@ -1,9 +1,6 @@
 
 
 from selenium import webdriver 
-from selenium.webdriver.common.by import By 
-from selenium.webdriver.support.ui import WebDriverWait 
-from selenium.webdriver.support import expected_conditions as EC 
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import pandas as pd
 import sys
@@ -21,7 +18,7 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
     option = webdriver.ChromeOptions()
     option.add_argument("— incognito")
 
-    driver = webdriver.Chrome('chromedriver.exe')  # Optional argument, if not specified will search path.
+    driver = webdriver.Chrome('./chromedriver.exe')  # Optional argument, if not specified will search path.
     driver.get(link)
 
     #Search table blocs

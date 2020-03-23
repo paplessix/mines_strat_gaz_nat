@@ -49,7 +49,6 @@ def data_updater(directory, price_type ='forward'):
 
 
 
-
 def main():
     data_initializer('./Web_Scraping')
     data_updater('./Web_Scraping')
