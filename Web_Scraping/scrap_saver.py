@@ -1,4 +1,5 @@
-from table_scraper import table_scraper, graph_scraper
+from table_scraper import table_scraper
+from graph_scraper import graph_scraper
 import datetime
 import csv
 import pandas as pd
