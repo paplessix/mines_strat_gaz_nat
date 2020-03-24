@@ -26,7 +26,7 @@ def pos_data_extract(string_data :str):
 def data_list_append(prices, price, dates, date,prediction_types, prediction_type ):
     """ Function to help add new data to the list of data
     Handle the WE doublon
-    """git 
+    """
     if '/' in date:
         
         if len(prediction_types) and prediction_types[-1] == 'WE':
@@ -57,7 +57,6 @@ def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
     """
 
     # Find yesterday's date 
-    yesterday = datetime.date.today() - datetime.timedelta(days=1)
     
     # Create a new instance of Chrome
     option = webdriver.ChromeOptions()
@@ -75,9 +74,8 @@ def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
     for GNL_type in GNL_types :
 
         webdriver.ActionChains(driver).double_click(GNL_type).perform()# click on the button
-        time.sleep(1)
+        time.sleep(2)
 
-        title = bloc.find_element_by_class_name('thecontent').text
         active = bloc.find_element_by_class_name('active').text
 
         #find the graph
@@ -133,7 +131,8 @@ def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
 
             data_list_append(prices, price, dates, date, prediction_types, prediction_type)
         table = pd.DataFrame({'Trading Day': dates,'Prediction Type': prediction_types,'Price' : prices}) 
-        print(active, table)
+        
+        yield unit, active, table 
     
     
     
