@@ -1,9 +1,6 @@
 
 
 from selenium import webdriver 
-from selenium.webdriver.common.by import By 
-from selenium.webdriver.support.ui import WebDriverWait 
-from selenium.webdriver.support import expected_conditions as EC 
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import pandas as pd
 import sys
@@ -21,7 +18,7 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
     option = webdriver.ChromeOptions()
     option.add_argument("— incognito")
 
-    driver = webdriver.Chrome('chromedriver.exe')  # Optional argument, if not specified will search path.
+    driver = webdriver.Chrome('./chromedriver.exe')  # Optional argument, if not specified will search path.
     driver.get(link)
 
     #Search table blocs
@@ -43,7 +40,6 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
         webdriver.ActionChains(driver).double_click(type_season).perform() 
         time.sleep(3) # TO DO : Wait for the table to be loaded
         #find_title and infos
-        title = bloc_month.find_element_by_class_name('thecontent').text
         info = bloc_month.find_element_by_class_name('data-table-title').text
         
         active_month = bloc_month.find_element_by_class_name('active').text
@@ -80,7 +76,7 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
             table = table_month
         else :
             table = pd.merge(table_month, table_season)
-        yield title, info, active_month, table
+        yield info, active_month, table
 
     driver.quit()
 
