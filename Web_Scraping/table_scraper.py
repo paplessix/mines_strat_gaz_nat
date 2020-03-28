@@ -1,10 +1,22 @@
 
 
-from selenium import webdriver 
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import pandas as pd
 import sys
 import time
+
+
+def wait_is_loaded(delay, driver, path_direction, type_of_path, browser):
+    path = {"css_selector" : By.CSS_SELECTOR, "class_name" : By.CLASS_NAME} 
+    try:
+        WebDriverWait(driver, delay).until(EC.visibility_of_element_located((path[type_of_path],path_direction)))
+    except TimeoutException:
+        print( 'data_exception')
+
 
 
 def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
@@ -20,7 +32,7 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
 
     driver = webdriver.Chrome('./chromedriver.exe')  # Optional argument, if not specified will search path.
     driver.get(link)
-
+    delay  = 10
     #Search table blocs
     blocs  = driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
     bloc_month = blocs[-3]
@@ -30,18 +42,23 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
     
     for type_month, type_season in zip( GNL_types_month, GNL_types_season) : # iterate on this types
         
-        
         # Reinitialize var
         table_month, table_season,table = None, None, None
         no_month, no_season = False, False
+        # Change GNL types 
 
         webdriver.ActionChains(driver).double_click(type_month).perform()# click on the button
         time.sleep(1)
         webdriver.ActionChains(driver).double_click(type_season).perform() 
-        time.sleep(3) # TO DO : Wait for the table to be loaded
-        #find_title and infos
-        info = bloc_month.find_element_by_class_name('data-table-title').text
         
+        #Wait for everything to be loaded 
+        wait_is_loaded(delay,bloc_month,'table-responsive','class_name', driver)
+        wait_is_loaded(delay,bloc_season,'table-responsive','class_name', driver)
+        time.sleep(3) # Best Way to ensure that the table is perfectly loaded for now
+        
+        #find_title and infos
+              
+        info = bloc_month.find_element_by_class_name('data-table-title').text
         active_month = bloc_month.find_element_by_class_name('active').text
         active_season = bloc_season.find_element_by_class_name('active').text
         print(active_season,active_month)
@@ -53,6 +70,7 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
         # find table div
         try:
             div_month = bloc_month.find_element_by_class_name('table-responsive')
+
         except NoSuchElementException:
             no_month = True
         else:
@@ -72,10 +90,13 @@ def table_scraper(link = 'https://www.powernext.com/futures-market-data'):
          
         if no_month :
             table = table_season
+            print('no_month')
         elif  no_season :
             table = table_month
+            print('no_season')
         else :
             table = pd.merge(table_month, table_season)
+            print("merge")
         yield info, active_month, table
 
     driver.quit()

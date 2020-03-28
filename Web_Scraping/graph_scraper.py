@@ -1,5 +1,8 @@
 from selenium import webdriver 
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 import time
 import datetime
 import sys
@@ -54,19 +57,15 @@ def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
         - active : str ( the type of GNL)
         - data : pd.DataFrame ()
 
-    """
-
-    # Find yesterday's date 
-    
+    """    
     # Create a new instance of Chrome
     option = webdriver.ChromeOptions()
     option.add_argument("— incognito")
-
+    option.add_argument("--start-fullscreen")
     driver = webdriver.Chrome('chromedriver.exe')  # Optional argument, if not specified will search path.
     driver.get(link)
     
     #time.sleep(2) # Let the user actually see something!
-    
     
     blocs  = driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
     bloc = blocs[0]
@@ -74,15 +73,17 @@ def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
     for GNL_type in GNL_types :
 
         webdriver.ActionChains(driver).double_click(GNL_type).perform()# click on the button
-        time.sleep(2)
+        time.sleep(5)
 
         active = bloc.find_element_by_class_name('active').text
 
-        #find the graph
+        # find the graph
+
         chart_container = bloc.find_elements_by_class_name('highcharts-graph')[0]
 
         string_data = chart_container.value_of_css_property("d")
         pos_data = pos_data_extract(string_data)
+        
 
 
         ####
@@ -110,7 +111,7 @@ def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
         active_pos_y = pos_rel_middle_y
         dates, prediction_types, prices  = [],[],[]
         for new_pos_x,new_pos_y in pos_data:
-                
+            print( new_pos_x)
             #Calculate the offset of the mousz move to touch the last point 
             offset_x = new_pos_x-active_pos_x
             offset_y = new_pos_y-active_pos_y

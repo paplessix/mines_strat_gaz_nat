@@ -23,35 +23,56 @@ def data_initializer(directory, price_type ):
     if price_type == "forward":
         for info, active, table in table_scraper():
             filename = filename_constructor(directory, info, active, price_type)
-            table = table.reindex(index=table.index[::-1])
+            table = table.sort_values('Trading Day')
             table.to_csv(filename, index = False)
 
     if price_type == "spot":
         for unit, active, table in graph_scraper():
             filename = filename_constructor(directory, unit, active, price_type)
-            table = table.reindex(index=table.index[::-1])
+            table = table.sort_values('Trading Day')
             table.to_csv(filename, index = False)
+
 
 
 
 def data_updater(directory, price_type ):
     """Read the daily data and add to the existing DB only the missing one 
     """
-    for info, active, table in table_scraper(): 
-        filename = filename_constructor(directory, info, active,price_type)
-        existing_data = pd.read_csv(filename)
-        existing_data['Trading Day'] = pd.to_datetime(existing_data['Trading Day'],format = '%Y-%m-%d')
-        table['Trading Day'] = pd.to_datetime(table['Trading Day'],format = '%Y-%m-%d')
-        last_date  = max(existing_data['Trading Day'])
-        table = table[ table['Trading Day'] > last_date ]
-        existing_data = existing_data.append(table)
-        existing_data.to_csv(filename, index = False) 
+    if price_type == "forward":
+        for info, active, table in table_scraper(): 
+            filename = filename_constructor(directory, info, active,price_type)
+            existing_data = pd.read_csv(filename)
+            existing_data = existing_data.sort_values('Trading Day')
+            existing_data['Trading Day'] = pd.to_datetime(existing_data['Trading Day'],format = '%Y-%m-%d')
+            table['Trading Day'] = pd.to_datetime(table['Trading Day'],format = '%Y-%m-%d')
+            last_date  = max(existing_data['Trading Day'])
 
+            table = table[ table['Trading Day'] > last_date ]
+            table = table.sort_values('Trading Day')
+
+            existing_data = existing_data.append(table, sort = False)
+            existing_data.to_csv(filename, index = False) 
+    elif price_type == 'spot':
+        
+        for unit, active, table in graph_scraper():
+
+            filename = filename_constructor(directory, unit, active,price_type)
+            existing_data = pd.read_csv(filename)
+            existing_data = existing_data.sort_values('Trading Day')
+            existing_data['Trading Day'] = pd.to_datetime(existing_data['Trading Day'],format = '%Y-%m-%d')
+            table['Trading Day'] = pd.to_datetime(table['Trading Day'],format = '%Y-%m-%d')
+            last_date  = max(existing_data['Trading Day'])
+            table = table[ table['Trading Day'] > last_date ]
+            table = table.sort_values('Trading Day')
+
+            existing_data = existing_data.append(table, sort = False)
+            existing_data.to_csv(filename, index = False)
 
 
 def main():
     data_initializer('./Web_Scraping','spot')
-    data_updater('./Web_Scraping','forward')
+    #data_updater('./Web_Scraping','forward')
+    #data_updater('./Web_Scraping','spot')
 
 if __name__ == '__main__':
     sys.exit(main())
