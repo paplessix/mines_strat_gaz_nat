@@ -8,23 +8,25 @@ import datetime
 import sys
 import pandas as pd
 
-
-def test_quote( string , carac ='"' ):
-    if carac in string:
-        return string[:-2]
-    else : 
-        return string
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
 def pos_data_extract(string_data :str):
 
     data = list(map(float,map (test_quote ,list(filter(lambda x : not("M" in x or "L" in x ), string_data.split(' '))))))
     coordinates_couple = [ i for i in chunks(data,2)]
     print(coordinates_couple)
     return coordinates_couple
+
+def test_quote( string , carac ='"' ):
+    if carac in string:
+        return string[:-2]
+    else : 
+        return string
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 
 def data_list_append(prices, price, dates, date,prediction_types, prediction_type ):
     """ Function to help add new data to the list of data
@@ -44,107 +46,105 @@ def data_list_append(prices, price, dates, date,prediction_types, prediction_typ
     else : 
         prices.append(price)
         prediction_types.append(prediction_type)
-        dates.append(date)
+        dates.append(date)  
+class Browser :
+    def __init__(self):
+        self.delay = 10
 
-def graph_scraper(link ="https://www.powernext.com/spot-market-data"  ):
-    """Function that determine the last price of GNL in a graph
-    Still need to do multiple type of GNL and more than one day (probleme des WE )
-    For now just catch he last value but could catch all the values 
-    In order to unify with table_scraper.py
-    Return : 
-        - title : str ( maybe useless)
-        - info : str ( type of price and unit change this ? )
-        - active : str ( the type of GNL)
-        - data : pd.DataFrame ()
+    def chrome_launcher(self,link):
+        # Create a new instance of Chrome
+        option = webdriver.ChromeOptions()
+        option.add_argument("— incognito")
+        option.add_argument("--window-size=1920,1080")
+        print(link)
+        self.driver = webdriver.Chrome('./chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
+        self.driver.get(link)
 
-    """    
-    # Create a new instance of Chrome
-    option = webdriver.ChromeOptions()
-    option.add_argument("— incognito")
-    option.add_argument("--start-fullscreen")
-    driver = webdriver.Chrome('chromedriver.exe')  # Optional argument, if not specified will search path.
-    driver.get(link)
     
-    #time.sleep(2) # Let the user actually see something!
-    
-    blocs  = driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
-    bloc = blocs[0]
-    GNL_types = bloc.find_elements_by_tag_name ("li")
-    for GNL_type in GNL_types :
+    def GNL_finder(self):
+        blocs  = self.driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
+        self.bloc = blocs[0]
+        self.GNL_types = self.bloc.find_elements_by_tag_name ("li")
+        self.GNL_types_text = [tile.text for tile in self.GNL_types]
+        print(self.GNL_types_text)
 
-        webdriver.ActionChains(driver).double_click(GNL_type).perform()# click on the button
-        time.sleep(5)
 
-        active = bloc.find_element_by_class_name('active').text
+    def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data"  ):
+        """Function that determine the last price of GNL in a graph
+        Still need to do multiple type of GNL and more than one day (probleme des WE )
+        For now just catch he last value but could catch all the values 
+        In order to unify with table_scraper.py
+        Return : 
+            - title : str ( maybe useless)
+            - info : str ( type of price and unit change this ? )
+            - active : str ( the type of GNL)
+            - data : pd.DataFrame ()
 
-        # find the graph
-
-        chart_container = bloc.find_elements_by_class_name('highcharts-graph')[0]
-
-        string_data = chart_container.value_of_css_property("d")
-        pos_data = pos_data_extract(string_data)
+        """ 
+        self.chrome_launcher(link)           
+        time.sleep(2) # Let the user actually see something!
         
+        self.GNL_finder()
+        for GNL_type in self.GNL_types :
+            if  (not specific_type)  or (type_season.text in specific_type):
+                webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# click on the button
+                time.sleep(5)
 
+                active = self.bloc.find_element_by_class_name('active').text
 
-        ####
-        
-        
-        min_x = min(pos_data, key= lambda x : x[0])[0]
-        max_x = max(pos_data, key= lambda x : x[0])[0]
+                # find the graph
 
+                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
 
-        min_y = min(pos_data, key= lambda x : x[1])[1]
-        max_y = max(pos_data, key= lambda x : x[1])[1]
+                string_data = chart_container.value_of_css_property("d")
+                pos_data = pos_data_extract(string_data)
+                ####
+                min_x = min(pos_data, key= lambda x : x[0])[0]
+                max_x = max(pos_data, key= lambda x : x[0])[0]
+                min_y = min(pos_data, key= lambda x : x[1])[1]
+                max_y = max(pos_data, key= lambda x : x[1])[1]
+                # Height and Width of the box
+                width = max_x - min_x
+                height = max_y - min_y
+                # Determine coordinate of the middle of the box
+                pos_rel_middle_x = width/2 + min_x
+                pos_rel_middle_y = height/2 + min_y
 
-        # Height and Width of the box
-        width = max_x - min_x
-        height = max_y - min_y
+                webdriver.ActionChains(self.driver).move_to_element(chart_container).perform()
+                active_pos_x = pos_rel_middle_x
+                active_pos_y = pos_rel_middle_y
+                dates, prediction_types, prices  = [],[],[]
+                for new_pos_x,new_pos_y in pos_data:
+                    print( new_pos_x)
+                    #Calculate the offset of the mousz move to touch the last point 
+                    offset_x = new_pos_x-active_pos_x
+                    offset_y = new_pos_y-active_pos_y
 
-        
+                    webdriver.ActionChains(self.driver).move_by_offset(offset_x,offset_y).perform()
 
-        # Determine coordinate of the middle of the box
-        pos_rel_middle_x = width/2 + min_x
-        pos_rel_middle_y = height/2 + min_y
+                    active_pos_x =new_pos_x
+                    active_pos_y = new_pos_y       
+                    
+                    label = self.driver.find_element_by_class_name("highcharts-label")
+                    texte = label.find_element_by_tag_name("text")
+                    texte = texte.find_elements_by_tag_name("tspan")
+                    print(texte[0].text.split(' '))
+                    prediction_type, date = texte[0].text.split(' ')
+                    info_price = texte[1].text.split(' ')
+                    unit = info_price[1]
+                    price = float(info_price[0])
 
-        webdriver.ActionChains(driver).move_to_element(chart_container).perform()
-        active_pos_x = pos_rel_middle_x
-        active_pos_y = pos_rel_middle_y
-        dates, prediction_types, prices  = [],[],[]
-        for new_pos_x,new_pos_y in pos_data:
-            print( new_pos_x)
-            #Calculate the offset of the mousz move to touch the last point 
-            offset_x = new_pos_x-active_pos_x
-            offset_y = new_pos_y-active_pos_y
+                    data_list_append(prices, price, dates, date, prediction_types, prediction_type)
+                table = pd.DataFrame({'Trading Day': dates,'Prediction Type': prediction_types,'Price' : prices}) 
+                yield unit, active, table
+            else:
+                print('not now')
+        self.driver.quit()
 
-            webdriver.ActionChains(driver).move_by_offset(offset_x,offset_y).perform()
-
-            active_pos_x =new_pos_x
-            active_pos_y = new_pos_y       
-            
-            label = driver.find_element_by_class_name("highcharts-label")
-            texte = label.find_element_by_tag_name("text")
-            texte = texte.find_elements_by_tag_name("tspan")
-            print(texte[0].text.split(' '))
-            prediction_type, date = texte[0].text.split(' ')
-            info_price = texte[1].text.split(' ')
-            unit = info_price[1]
-            price = float(info_price[0])
-
-            data_list_append(prices, price, dates, date, prediction_types, prediction_type)
-        table = pd.DataFrame({'Trading Day': dates,'Prediction Type': prediction_types,'Price' : prices}) 
-        
-        yield unit, active, table 
-    
-    
-    
-    driver.quit()
-        # time.sleep(6) # Let the user actually see something!
-
-        
-
-    
-    
+ 
 def main():
-    graph_scraper()
+    browser = Browser()
+    for i in browser.scraper_iterator():
+        print(i)
 if __name__ == '__main__':
     sys.exit(main())

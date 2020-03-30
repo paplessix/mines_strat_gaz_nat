@@ -17,7 +17,7 @@ class Browser :
         # Create a new instance of Chrome
         option = webdriver.ChromeOptions()
         option.add_argument("— incognito")
-
+        print(link)
         self.driver = webdriver.Chrome('./chromedriver.exe')  # Optional argument, if not specified will search path.
         self.driver.get(link)
     
@@ -44,7 +44,7 @@ class Browser :
         info = self.bloc_month.find_element_by_class_name('data-table-title').text
         active_month = self.bloc_month.find_element_by_class_name('active').text
         active_season = self.bloc_season.find_element_by_class_name('active').text
-        print(active_season,active_month,'i')
+        
         
         if active_month != active_season :
             raise TypeError
@@ -74,7 +74,7 @@ class Browser :
         return table_month, table_season, no_month, no_season, info, active_month
 
 
-    def table_scraper_iterator(self, link = 'https://www.powernext.com/futures-market-data', specific_type = False):
+    def scraper_iterator(self,specific_type = False, link = 'https://www.powernext.com/futures-market-data' ):
         """
         Function that returns an iterator on the table of forward prices of different GNL Types
         Input :
@@ -85,8 +85,7 @@ class Browser :
         self.GNL_finder()
 
         for type_month, type_season in zip( self.GNL_types_month, self.GNL_types_season) : # iterate on this types
-            if  (not specific_type)  or (type_season.text in specific_type): 
-                print(type_month,type_season)        
+            if  (not specific_type)  or (type_season.text in specific_type):        
                 # Change GNL types 
                 webdriver.ActionChains(self.driver).double_click(type_season).perform()
                 time.sleep(1)
@@ -94,10 +93,8 @@ class Browser :
                 time.sleep(1)
                 webdriver.ActionChains(self.driver).double_click(type_season).perform()# chelou ça amrche sur mon ordi
                 #Wait for everything to be loaded 
-                # self.wait_is_loaded(self.bloc_month,'table-responsive','class_name')
-                # self.wait_is_loaded(self.bloc_season,'table-responsive','class_name')
                 time.sleep(3) # Best Way to ensure that the table is perfectly loaded for now
-                print( specific_type, type_month.text,type_season.text )
+                
                 table_month, table_season, no_month, no_season, info, active = self.table_scraper()
                 
                 if no_month :
@@ -117,7 +114,7 @@ class Browser :
 
 def main():
     browser = Browser()
-    for i in browser.table_scraper_iterator(specific_type="GPL"):
+    for i in browser.scraper_iterator(specific_type="GPL"):
         print(i)
 
 if __name__ == '__main__':
