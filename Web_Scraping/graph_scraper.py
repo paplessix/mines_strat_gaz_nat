@@ -27,7 +27,7 @@ def graph_scraper(link ="https://www.powernext.com/futures-market-data"  ):
     option = webdriver.ChromeOptions()
     option.add_argument("— incognito")
 
-    driver = webdriver.Chrome('chromedriver.exe')  # Optional argument, if not specified will search path.
+    driver = webdriver.Chrome('C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/githubprojet/mines_strat_gaz_nat/chromedriver.exe')  # Optional argument, if not specified will search path.
     driver.get(link)
     
     #time.sleep(2) # Let the user actually see something!
@@ -69,7 +69,7 @@ def graph_scraper(link ="https://www.powernext.com/futures-market-data"  ):
     # Determine coordinate of the middle of the box
     pos_rel_middle_x = width/2 + pos_data_init[0]
     pos_rel_middle_y = height/2 + pos_data_init[1]
-    #Calculate the offset of the mous move to touch the last point 
+    #Calculate the offset of the mouse move to touch the last point 
     offset_x = pos_data_of_the_day[0]-pos_rel_middle_x
     offset_y = pos_data_of_the_day[1]-pos_rel_middle_y
 
