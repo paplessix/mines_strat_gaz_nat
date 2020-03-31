@@ -54,8 +54,9 @@ class Browser :
     def chrome_launcher(self,link):
         # Create a new instance of Chrome
         option = webdriver.ChromeOptions()
-        option.add_argument("— incognito")
-        option.add_argument("--window-size=1920,1080")
+
+        #option.add_argument("--window-size=1920,1080")
+        option.add_argument("--start-maximized")
         print(link)
         self.driver = webdriver.Chrome('./chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
         self.driver.get(link)
@@ -97,7 +98,10 @@ class Browser :
                 chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
 
                 string_data = chart_container.value_of_css_property("d")
+                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
+                webdriver.ActionChains(self.driver).move_to_element(chart_container).perform()
                 pos_data = pos_data_extract(string_data)
+                print(pos_data)
                 ####
                 min_x = min(pos_data, key= lambda x : x[0])[0]
                 max_x = max(pos_data, key= lambda x : x[0])[0]
@@ -107,23 +111,29 @@ class Browser :
                 width = max_x - min_x
                 height = max_y - min_y
                 # Determine coordinate of the middle of the box
-                pos_rel_middle_x = width/2 + min_x
-                pos_rel_middle_y = height/2 + min_y
+                origin_x = 439  
+                origin_y = 917
+                pos_rel_middle_x = width/2 + origin_x +min_x
+                pos_rel_middle_y = height/2 + origin_y + min_y
 
                 webdriver.ActionChains(self.driver).move_to_element(chart_container).perform()
+                
+                
                 active_pos_x = pos_rel_middle_x
                 active_pos_y = pos_rel_middle_y
                 dates, prediction_types, prices  = [],[],[]
                 for new_pos_x,new_pos_y in pos_data:
-                    print( new_pos_x)
+                    print( new_pos_x + origin_x)
+                    print(new_pos_y + origin_y)
                     #Calculate the offset of the mousz move to touch the last point 
-                    offset_x = new_pos_x-active_pos_x
-                    offset_y = new_pos_y-active_pos_y
-
+                    offset_x = new_pos_x + origin_x - active_pos_x
+                    print(offset_x)
+                    offset_y = new_pos_y + origin_y - active_pos_y
+                    offset_y = 0
                     webdriver.ActionChains(self.driver).move_by_offset(offset_x,offset_y).perform()
 
-                    active_pos_x =new_pos_x
-                    active_pos_y = new_pos_y       
+                    active_pos_x = new_pos_x + origin_x
+                    active_pos_y = new_pos_y + origin_y       
                     
                     label = self.driver.find_element_by_class_name("highcharts-label")
                     texte = label.find_element_by_tag_name("text")
