@@ -108,8 +108,8 @@ class Browser :
                 width = max_x - min_x
                 height = max_y - min_y
                 # Determine coordinate of the middle of the box
-                origin_x = 439  
-                origin_y = 917
+                origin_x = chart_container.rect['x']  
+                origin_y = chart_container.rect['y']
                 pos_abs_middle_x = width/2 + origin_x + min_x
                 pos_abs_middle_y = height/2 + origin_y + min_y
               
@@ -130,7 +130,7 @@ class Browser :
                     label = self.driver.find_element_by_class_name("highcharts-label")
                     texte = label.find_element_by_tag_name("text")
                     texte = texte.find_elements_by_tag_name("tspan")
-                    print(texte[0].text.split(' '))
+                    #print(texte[0].text.split(' '))
                     prediction_type, date = texte[0].text.split(' ')
                     if date == last_date :
                         pass

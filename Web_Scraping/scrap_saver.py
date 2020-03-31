@@ -1,5 +1,5 @@
 from table_scraper import Browser as Browser_forward
-from graph_scraper import graph_scraper as Browser_spot # to change
+from graph_scraper import Browser as Browser_spot # to change
 import datetime
 import csv
 import pandas as pd
@@ -57,7 +57,7 @@ def data_updater(directory, price_type, specific_type = False ):
             table.to_csv(filename, index = False) 
         
 def main():
-    data_initializer('./Web_Scraping','forward')
+    # data_initializer('./Web_Scraping','forward')
     data_updater('./Web_Scraping','forward')
     data_updater('./Web_Scraping','spot')
 
