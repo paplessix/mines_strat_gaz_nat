@@ -96,7 +96,6 @@ class Browser :
                 chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
                 webdriver.ActionChains(self.driver).move_to_element(chart_container).perform()
                 pos_data = pos_data_extract(string_data)
-                print(pos_data)
                 ####
                 init_pos_x = pos_data[0][0]
                 init_pos_y = pos_data[0][1]
