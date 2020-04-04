@@ -18,4 +18,6 @@ class DiffusionSpot:
         of spot prices must be in a csv file, placed in the same repository as the script. If not,
         the path to the csv should be specified.
         '''
-        self._dataset = pd.read_csv(path)
+        self._dataset = pd.read_csv(path, sep='\t')
+        
+
