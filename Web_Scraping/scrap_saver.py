@@ -57,9 +57,7 @@ def data_updater(directory, price_type, specific_type = False ):
             table.to_csv(filename, index = False) 
         
 def main():
-    #data_initializer('./Web_Scraping','spot')
-    data_updater('./Web_Scraping','forward')
-    #data_updater('./Web_Scraping','spot')
+    data_initializer('./Web_Scraping','forward')
 
 if __name__ == '__main__':
     sys.exit(main())

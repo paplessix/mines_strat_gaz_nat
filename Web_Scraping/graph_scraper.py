@@ -47,6 +47,7 @@ def data_list_append(prices, price, dates, date,prediction_types, prediction_typ
         prices.append(price)
         prediction_types.append(prediction_type)
         dates.append(date)  
+
 class Browser :
     def __init__(self):
         self.delay = 10
@@ -57,7 +58,7 @@ class Browser :
         option.add_argument("— incognito")
         option.add_argument("--window-size=1920,1080")
         print(link)
-        self.driver = webdriver.Chrome('./chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
+        self.driver = webdriver.Chrome('C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/githubprojet/mines_strat_gaz_nat/chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
         self.driver.get(link)
 
     
@@ -71,7 +72,7 @@ class Browser :
 
     def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data"  ):
         """Function that determine the last price of GNL in a graph
-        Still need to do multiple type of GNL and more than one day (probleme des WE )
+        Still need to do multiple type of GNL and more than one day (probleme des WE)
         For now just catch he last value but could catch all the values 
         In order to unify with table_scraper.py
         Return : 
@@ -146,5 +147,6 @@ def main():
     browser = Browser()
     for i in browser.scraper_iterator():
         print(i)
+
 if __name__ == '__main__':
     sys.exit(main())
