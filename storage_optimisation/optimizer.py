@@ -7,7 +7,7 @@ import datetime
 
 #data = pd.read_csv('./storage_optimisation/spot_history_HH.csv')
 data =  pd.read_csv('spot_history_HH.csv')
-data = data.iloc[50 :350 ]
+data = data.iloc[-300 :-100 ]
 data['Day'] = pd.to_datetime(data['Day'], format = '%Y-%m-%d')
 plt.plot(data['Day'], data['Price'])
 plt.show()
@@ -57,7 +57,6 @@ for month in months.keys():
             threshold[index_number[0]] = months[month]
         else:
             pass
-            
 data[ 'minV'] = 0
 data["maxV"] = 1
 Vmax = 100
@@ -79,17 +78,17 @@ Vect_max = np.array(data['maxV'])
 def volume(X,initial_v = 0):
     return initial_v + sum([buy-sell for sell, buy in zip(X[::2],X[1::2])])
 
-###Constraits
-I_sell = np.zeros((2*N,2*N))
-for i in range(0,2*N,2):
-    I_sell[i,i]=1
+###Contraints
+I_sell = np.zeros((N,2*N))
+for i in range(0,N):
+    I_sell[i,2*i]=1
 
-c1 = scipy.optimize.LinearConstraint(I_sell,0,0.016*Vmax)
+c1 = scipy.optimize.LinearConstraint(I_sell,0,np.inf)
 
-I_buy = np.zeros((2*N,2*N))
-for i in range(1,2*N+1,2):
-    I_buy[i,i]=1
-c2 = scipy.optimize.LinearConstraint(I_buy,0,0.016*Vmax)
+I_buy = np.zeros((N,2*N))
+for i in range(N):
+    I_buy[i,2*i+1]=1
+c2 = scipy.optimize.LinearConstraint(I_buy,0,np.inf)
 
 I_diff= np.zeros((N,2*N))
 
@@ -108,12 +107,62 @@ max_vect = Vmax * np.ones(N)
 c3 = scipy.optimize.LinearConstraint(triang_sup.transpose()@I_diff,Vect_min- initial_vect ,Vect_max - initial_vect)
 #c3 = {'type': 'ineq', 'fun': lambda x : Vmax - volume(-x,initial_v)}
 
-res = minimize(lambda x:profit(x, data['Price']), X_0,method='SLSQP', constraints = [c1,c2,c3],options={'disp': True})
+
+### Contraintes non linéaires
+def sout_corrige(v,Vmax):
+    Y_0 = [0,0.4]
+    Y_1 = [0.17, 0.65]
+    Y_2 = [1,1]
+    D_nom = 44
+    D_reel = 60
+    # Dans le cas Sediane nord
+    stock_level = v/Vmax
+    if stock_level < Y_1[0]:
+        return D_nom*(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
+    else : 
+        return D_nom*(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+
+sout_corrige  = np.vectorize(sout_corrige)
+
+def inj_corrige(v,Vmax):
+    Y_0 = [0,1]
+    Y_1 = [0.6, 1]
+    Y_2 = [1,0.43]
+    D_nom = 85
+    D_reel = 101
+    # Dans le cas Sediane nord
+    stock_level = v/Vmax
+    if stock_level < Y_1[0]:
+        return D_nom*(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
+    else : 
+        return D_nom*(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+
+inj_corrige = np.vectorize( inj_corrige)
+
+def max_soutirage(x):
+    v_vect = np.dot(triang_sup.transpose()@I_diff,x) + initial_vect
+    max_x = sout_corrige(v_vect, Vmax)
+    return Vmax/max_x
+
+def max_injection(x):
+    v_vect = np.dot(triang_sup.transpose()@I_diff,x) + initial_vect
+    max_x = inj_corrige(v_vect, Vmax)
+    return Vmax/max_x
+
+def con_max_sout(x):
+    return max_soutirage(x)- np.dot(I_sell,x)
+
+def con_max_inj(x):
+    return max_injection(x)-np.dot(I_buy,x)
+
+c4 = scipy.optimize.NonlinearConstraint(con_max_sout,0,np.inf)
+c5 = scipy.optimize.NonlinearConstraint(con_max_inj,0,np.inf)
+res = minimize(lambda x:profit(x, data['Price']), X_0,method='SLSQP', constraints = [c1,c2,c3,c4,c5])
 print(-profit(res.x,data['Price']))
 
 
 volumes=[]
-for i in range(0,2*N,2):
+for i in range(2,2*(N+1),2):
     volumes.append(volume(res.x[:i], initial_v))
 
 
