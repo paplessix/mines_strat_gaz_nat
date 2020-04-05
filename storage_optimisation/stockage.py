@@ -13,7 +13,7 @@ class Stockage():
         self.dates = data['Day']
         self.N = len(self.dates)
         self.m = Matrices(self.N)
-
+        self.type = "generique"
         #Propriétés du stockage- version générique 
         self.Y_0 = [0,0.4]
         self.Y_1 = [0.17, 0.65]
@@ -139,6 +139,8 @@ class Stockage():
         plt.plot(self.dates, var_sup, label = 'inj_max')
         plt.plot(self.dates, var_inf, label = 'sout_max')
 
+    def __str__(self):
+        return f"Stockage de Gaz : \n Type : {self.type} \n Volume max = {self.Vmax} \n  Volume initial = {self.Vinit}\n Temps d'évolutions = {self.N} jours \n"
 
 
 class Sediane_Nord_20 (Stockage):

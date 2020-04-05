@@ -22,7 +22,6 @@ print('Threshold', stock.threshold_con)
 opti = Optimizer(stock)
 opti.contraints_init()
 opti.optimize()
-stock.evolution
 stock.plot_threshold()
 stock.plot_volume()
 plt.show()
