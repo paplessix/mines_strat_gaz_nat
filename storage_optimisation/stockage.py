@@ -45,24 +45,24 @@ class Stockage():
         V = np.dot(self.m.triang_inf@self.m.I_diff,X) + self.Vinit*np.ones(self.N)
         def sout_correction( v ):
             stock_level = v/self.Vmax
-            if stock_level < self.Y_1[0]: # A rendre +modualire
-                return self.D_nom*(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
+            if stock_level <Y_1[0]: # A rendre +modualire
+                return self.D_nom/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
             else : 
-                return self.D_nom*(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+                return self.D_nom/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
         sout_correction  = np.vectorize(sout_correction)
         return self.Vmax/sout_correction(V)
 
     def inj_corrige(self,X):
-        Y_1 = self.Y_1
-        Y_0 = self.Y_0
-        Y_2 = self.Y_2
+        Y_0 = [0,1]
+        Y_1 = [0.6, 1]
+        Y_2 = [1,0.43]
         V = np.dot(self.m.triang_inf@self.m.I_diff,X) + self.Vinit*np.ones(self.N)
         def inj_correction(v):
             stock_level = v/self.Vmax
             if stock_level < Y_1[0]:# A Rendre + modulaire
-                return self.D_nom*(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
+                return self.D_nom/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
             else : 
-                return self.D_nom*(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+                return self.D_nom/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
         inj_correction = np.vectorize(inj_correction)
         return self.Vmax/inj_correction(V)
     
@@ -132,6 +132,19 @@ class Stockage():
         plt.plot(self.dates,self.vect_min)
         plt.plot(self.dates,self.vect_max)
     
+    def plot_injection(self):
+        injection = self.evolution[1::2]
+        inj_max = self.inj_corrige(self.evolution)
+        plt.plot(self.dates,injection, label = 'inj')
+        plt.plot(self.dates,inj_max, label = 'inj_max')
+
+    def plot_soutirage(self):
+        soutirage = self.evolution[::2]
+        sout_max = self.sout_corrige(self.evolution)
+        plt.plot(self.dates,soutirage, label = 'sout')
+        plt.plot(self.dates,sout_max, label  = 'sout_max')
+
+
 class Sediane_Nord_20 (Stockage):
     def __init__(self,Vmax,Vinit, dates, evolution):
         Stockage.__init__(self, Vmax, Vinit,dates, evolution)
@@ -144,15 +157,3 @@ class Sediane_Nord_20 (Stockage):
                             '08': [0.5,0.9],'09' : [0,0.95],
                             '11':[0.85,1]}
 
-
-# data =  pd.read_csv('spot_history_HH.csv')
-# data = data.iloc[50 :60]
-# data['Day'] = pd.to_datetime(data['Day'], format = '%Y-%m-%d')
-# plt.plot(data['Day'], data['Price'])
-# plt.show()
-# X_0 = np.ones(2*len(data['Day']))
-
-
-# stock = Stockage(100, 50, data, X_0)
-# stock.plot_threshold()
-# print(stock.vect_max)
