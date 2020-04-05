@@ -24,7 +24,7 @@ class Stockage():
                                     '11':[0.85,1]}
     
     def volume_vect (self):
-        v_vect = np.dot(self.m.triang_inf@self.m.I_diff,self.evolution) + self.Vinit*np.ones(self.N)
+        v_vect = np.dot(self.m.triang_inf,self.evolution) + self.Vinit*np.ones(self.N)
         return v_vect
 
     v = property(volume_vect)
@@ -42,7 +42,7 @@ class Stockage():
         Y_1 = self.Y_1
         Y_0 = self.Y_0
         Y_2 = self.Y_2
-        V = np.dot(self.m.triang_inf@self.m.I_diff,X) + self.Vinit*np.ones(self.N)
+        V = np.dot(self.m.triang_inf,X) + self.Vinit*np.ones(self.N)
         def sout_correction( v ):
             stock_level = v/self.Vmax
             if stock_level <Y_1[0]: # A rendre +modualire
@@ -50,13 +50,13 @@ class Stockage():
             else : 
                 return self.D_nom/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
         sout_correction  = np.vectorize(sout_correction)
-        return self.Vmax/sout_correction(V)
+        return -self.Vmax/sout_correction(V)
 
     def inj_corrige(self,X):
         Y_0 = [0,1]
         Y_1 = [0.6, 1]
         Y_2 = [1,0.43]
-        V = np.dot(self.m.triang_inf@self.m.I_diff,X) + self.Vinit*np.ones(self.N)
+        V = np.dot(self.m.triang_inf,X) + self.Vinit*np.ones(self.N)
         def inj_correction(v):
             stock_level = v/self.Vmax
             if stock_level < Y_1[0]:# A Rendre + modulaire
@@ -133,16 +133,12 @@ class Stockage():
         plt.plot(self.dates,self.vect_max)
     
     def plot_injection(self):
-        injection = self.evolution[1::2]
-        inj_max = self.inj_corrige(self.evolution)
-        plt.plot(self.dates,injection, label = 'inj')
-        plt.plot(self.dates,inj_max, label = 'inj_max')
+        var_sup = self.inj_corrige(self.evolution)
+        var_inf = self.sout_corrige((self.evolution))
+        plt.plot(self.dates, self.evolution, label = 'evol')
+        plt.plot(self.dates, var_sup, label = 'inj_max')
+        plt.plot(self.dates, var_inf, label = 'sout_max')
 
-    def plot_soutirage(self):
-        soutirage = self.evolution[::2]
-        sout_max = self.sout_corrige(self.evolution)
-        plt.plot(self.dates,soutirage, label = 'sout')
-        plt.plot(self.dates,sout_max, label  = 'sout_max')
 
 
 class Sediane_Nord_20 (Stockage):
