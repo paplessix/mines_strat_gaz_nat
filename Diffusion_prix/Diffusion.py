@@ -90,6 +90,10 @@ class DiffusionSpot:
         self._winter_volatility = self.short_volatility(False)
         return self._winter_volatility
 
+    def mean_reversion(self, summer = True):
+        if summer:
+            df = self.
+            
     def pilipovic(self, n, summer = True, t_fin:int, t_ini = 0):
         '''
         Numerically solves stochastic differential equation of the pilipovic process.
