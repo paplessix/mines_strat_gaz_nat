@@ -35,7 +35,7 @@ class DiffusionSpot:
     def string_test(self, string, list_str):
         '''
         Short test needed in volatility method to make code clearer.
-        Tests if string is in list of months or years.
+        Tests if string is in list of string (months or years).
         '''
         return any([string == list_str[i] for i in range(len(list_str))])
 
@@ -51,7 +51,8 @@ class DiffusionSpot:
             if self.string_test(np.array(df['Day'])[i].split('-')[1], months)  and self.string_test(np.array(df['Day'])[i].split('-')[0], years):
                 rows.append(i)
         df1 = df[df.index.isin(rows)]
-        return df1.dropna(inplace = True)   #In case there are missing values
+        df1.dropna(inplace = True) #In case there are missing values
+        return df1 
 
     def short_volatility(self, summer = True):
         '''
@@ -88,6 +89,21 @@ class DiffusionSpot:
     def winter_volatility(self):
         self._winter_volatility = self.short_volatility(False)
         return self._winter_volatility
+
+    def pilipovic(self, n, summer = True, t_fin:int, t_ini = 0):
+        '''
+        Numerically solves stochastic differential equation of the pilipovic process.
+        Here is considered standard , uncorellated brownian motion
+        '''
+        if summer:
+            short_vol = self.summer_volatility
+        else:
+            short_vol = self.winter_volatility
+        mean_reversion = 
+        step = (t_fin - t_ini)/n
+
+
+
 
     
     
