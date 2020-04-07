@@ -3,9 +3,10 @@ import scipy
 import math
 import pandas as pd 
 import argparse
-import sklearn.linear_model
+from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
-
+from datetime import timedelta, date
+import matplotlib.dates as mdates
 
 
 #Pour juste faire tourner le script sans devoir faire appel à des classes spécifiques
@@ -17,18 +18,21 @@ import matplotlib.pyplot as plt
 
 class DiffusionSpot:
 
-    def __init__(self, path:str, summer_months=['03', '04', '05', '06', '07', '08'], winter_months=['09', '10', '11', '12', '01', '02'], years=['2019','2020']):
+    def __init__(self, path1:str, path2:str, skip=[], summer_months=['03', '04', '05', '06', '07', '08'], winter_months=['09', '10', '11', '12', '01', '02'], years=['2019','2020']):
         '''
         Initialise the Diffusion class. The historical data for the creation of the diffusion model
         of spot prices must be in a csv file, placed in the same repository as the script. If not,
         the path to the csv should be specified.
         The model uses different volatility of spot prices, of long-term evolution and different 
         mean-reversion parameters for summer or winter months. The years to specify in the 
-        constructor are the ones for which we wish to estimate volatility
+        constructor are the ones for which we wish to estimate volatility.
+        The skip parameter is just to skip the first few rows of a dataset if they are strings or non 
+        integer values.
         '''
-        self._dataset = pd.read_csv(path, header = 0, skiprows = [1,2,3,4])
-        if list(self._dataset) != ['Day', 'Price']:
-            self._dataset.columns = ['Day', 'Price']  #Set column names
+        self._dataset = pd.read_csv(path1, header = 0, skiprows = skip)
+        if list(self._dataset) != ['Day', 'Price'] and list(self._dataset)!= ['Trading Day', 'Prediction', 'Price']:
+            self._dataset.columns = ['Day', 'Prediction', 'Price']  #Set column names
+        self.df_forward = pd.read_csv(path2)
         self.summer_months = summer_months
         self.winter_months = winter_months
         self.years = years
@@ -93,11 +97,11 @@ class DiffusionSpot:
         self._winter_volatility = self.short_volatility(False)
         return self._winter_volatility
 
-    def mean_reversion(self, summer = True):
+    def illustrating_mean_reversion(self, summer = True):
         '''
-        Function for estimating the mean reversion parameter with given historical data.
+        Function for illustrating before estimating the mean reversion parameter with given historical data.
         Approach supposes the time step is sufficiently small that a naïve description of 
-        the U-O process can be taken. We use a least-squares regression to regress the value
+        the U-O process can be taken. We will use a least-squares regression to regress the value
         of the rate of mean-reversion. We plot G_{t+1} - G_{t} = Y against G{t} = X
         '''
         years = self.years
@@ -108,31 +112,87 @@ class DiffusionSpot:
         df = self.selecting_dataframe(years, months)
         price = np.array(df['Price'])
         Y = [price[i] - price[i-1] for i in range(1, len(price))]
-        plt.plot(price[:-1], Y)
-        plt.plot(price[1:], price[:-1])
+        plt.scatter(price[:-1], Y, color = 'r', marker = 'o' )
+        plt.legend('G_{t+1} - G_{t} = Y against G{t} = X')
+        plt.scatter(price[1:], price[:-1], color = 'b', marker = 'x')
+        plt.legend('G_{t+1} = Y against G{t] = X')
         plt.show()
-        return 0.5
+
+    def mean_reversion(self, summer = True):
+        years = self.years
+        if summer:
+            months = self.summer_months
+        else:
+            months = self.winter_months
+        df = self.selecting_dataframe(years, months)
+        price = np.array(df['Price'])
+        Y = np.array([price[i] - price[i-1] for i in range(1, len(price))])
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y )
+        return abs(slope)
+        
+
+    def fetch_forward(self, start_date):
+        '''
+        Fetches the right forward price for a given date starting from which we wish to create
+        the diffusion spot price model.
+        '''
+        df = self.df_forward
+        upcoming_months = df.loc[df['Trading Day'] == start_date, ['Month+1', 'Month+2', 'Month+3', 'Month+4']]
+        return np.array(upcoming_months.values)
 
     def hurst_exponent(self):
         '''
-        The goal of this funciton is to provide a scalar which allows us to confirm that our
+        The goal of this function is to provide a scalar which allows us to confirm that our
         time series is mean reveting, geometric brownian motion or is trending. This can confirm
         that our mean-reverting pilipovic process is justified and the strength of the rate of
         reversion as well.
         '''
         pass
 
-    def pilipovic_fixed_forward(self, n, summer = True, t_fin:int, t_ini = 0):
+    def daterange(self, start_date:date, end_date:date):
+        '''
+        Short function to give a list with incremented dates between a start and end date.
+        Start and end dates to given in date format. List of strings will be returned.
+        '''
+        dates = []
+        for n in range(int((end_date - start_date).days)):
+            next_date = start_date + timedelta(n)
+            dates.append(next_date.strftime('%Y-%m-%d'))
+        return dates
+
+    def pilipovic_fixed_forward(self,start_date:str,end_date:str, summer=True):
         '''
         Numerically solves stochastic differential equation of the pilipovic process.
-        Here is considered standard , uncorellated brownian motion
+        Here is considered standard brownian motion at each time step. The considered time
+        step is a day. The model is run over 4 months so around 122 days (if february is not one of these 
+        months). The function will take into account switches between summer and winter.
         '''
-        if summer:
-            short_vol = self.summer_volatility
-        else:
-            short_vol = self.winter_volatility
-        mean_reversion = 0.5
-        step = (t_fin - t_ini)/n
+        short_vol_sum = self.summer_volatility
+        short_vol_win = self.winter_volatility
+        mean_reversion_sum = self.mean_reversion()
+        mean_reversion_win = self.mean_reversion(False)
+        step = 1 #We consider one spot price given out every day. Even week-ends.
+        forward_curve = self.fetch_forward(start_date)
+        df = self._dataset
+        G_0 = np.array((df.loc[df['Day'] == start_date, ['Price']]))[0]
+        Spot_curve = [G_0[0]]
+        dates = self.daterange(date(int(start_date.split('-')[0]), int(start_date.split('-')[1]), int(start_date.split('-')[2])), date(int(end_date.split('-')[0]), int(end_date.split('-')[1]), int(end_date.split('-')[2])))
+        n = len(dates)
+        for i in range(1, n):
+            if self.string_test(dates[i].split('-')[1], self.summer_months):
+                sigma = short_vol_sum
+                alpha = mean_reversion_sum
+            else:
+                sigma = short_vol_win
+                alpha = mean_reversion_win
+            mean = forward_curve[0, i*4//n]  #should use better date comparison for exact shift in mean value
+            G_k = Spot_curve[-1]
+            G_k1 = alpha*(mean - G_k) + sigma*np.random.randn()
+            Spot_curve.append(G_k1)
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+        plt.plot(dates, Spot_curve)
+
 
 
 
