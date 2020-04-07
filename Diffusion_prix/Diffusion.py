@@ -3,6 +3,9 @@ import scipy
 import math
 import pandas as pd 
 import argparse
+import sklearn.linear_model
+import matplotlib.pyplot as plt
+
 
 
 #Pour juste faire tourner le script sans devoir faire appel à des classes spécifiques
@@ -68,8 +71,8 @@ class DiffusionSpot:
         price = np.array(df['Price'])
         somme_diff = 0
         for i in range(1, len(price)):
-            somme_diff += abs(price[i] - price[i-1])/abs(price[i-1])
-        return somme_diff/len(price)*100
+            somme_diff += abs(price[i] - price[i-1]) #/abs(price[i-1]) if normalized
+        return somme_diff/len(price)  #*100 if we want percentage
 
     def long_volatility(self):
         years = [f'{i}' for i in range(2010, 2021)]
@@ -77,8 +80,8 @@ class DiffusionSpot:
         df = self.selecting_dataframe(years)
         price = np.array(df['Price'])
         for i in range(1, len(price)):
-            somme += abs(price[i] - price[i-1])/abs(price[i-1])
-        return somme/len(price)*100
+            somme += abs(price[i] - price[i-1]) #/abs(price[i-1]) if normalized
+        return somme/len(price)   #*100 if we want percentage
         
     @property
     def summer_volatility(self):
@@ -91,10 +94,35 @@ class DiffusionSpot:
         return self._winter_volatility
 
     def mean_reversion(self, summer = True):
+        '''
+        Function for estimating the mean reversion parameter with given historical data.
+        Approach supposes the time step is sufficiently small that a naïve description of 
+        the U-O process can be taken. We use a least-squares regression to regress the value
+        of the rate of mean-reversion. We plot G_{t+1} - G_{t} = Y against G{t} = X
+        '''
+        years = self.years
         if summer:
-            df = self.
-            
-    def pilipovic(self, n, summer = True, t_fin:int, t_ini = 0):
+            months = self.summer_months
+        else:
+            months = self.winter_months
+        df = self.selecting_dataframe(years, months)
+        price = np.array(df['Price'])
+        Y = [price[i] - price[i-1] for i in range(1, len(price))]
+        plt.plot(price[:-1], Y)
+        plt.plot(price[1:], price[:-1])
+        plt.show()
+        return 0.5
+
+    def hurst_exponent(self):
+        '''
+        The goal of this funciton is to provide a scalar which allows us to confirm that our
+        time series is mean reveting, geometric brownian motion or is trending. This can confirm
+        that our mean-reverting pilipovic process is justified and the strength of the rate of
+        reversion as well.
+        '''
+        pass
+
+    def pilipovic_fixed_forward(self, n, summer = True, t_fin:int, t_ini = 0):
         '''
         Numerically solves stochastic differential equation of the pilipovic process.
         Here is considered standard , uncorellated brownian motion
@@ -103,7 +131,7 @@ class DiffusionSpot:
             short_vol = self.summer_volatility
         else:
             short_vol = self.winter_volatility
-        mean_reversion = 
+        mean_reversion = 0.5
         step = (t_fin - t_ini)/n
 
 
