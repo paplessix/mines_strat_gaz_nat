@@ -7,6 +7,7 @@ plt.close()
 data =  pd.read_csv('spot_history_HH.csv')
 data = data.iloc[50 :150]
 data['Day'] = pd.to_datetime(data['Day'], format = '%Y-%m-%d')
+#data['Price'] = np.sin(np.linspace(0,6,len(data['Day'])))+1
 plt.plot(data['Day'], data['Price'])
 plt.show()
 plt.close()
@@ -19,7 +20,7 @@ stock = Stockage(100, 50, data, X_0)
 print('Volume',stock.volume_end)
 print('Threshold', stock.threshold_con)
 
-opti = Optimizer(stock)
+opti = Optimizer(stock) 
 opti.contraints_init()
 opti.optimize()
 stock.plot_threshold()

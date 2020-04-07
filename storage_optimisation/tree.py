@@ -1,0 +1,28 @@
+import networkx as nx
+import numpy as np 
+import matplotlib.pyplot as plt
+index = np.arange(1,10,10)
+
+G = nx.DiGraph()
+G.add_node('R')
+G.add_node("u0")
+G.add_edge("R", "u0", probability=0.1, date ='199902902' )
+G.add_node("u1")
+G.add_edge("R", "u1", probability=0.5,date ='199902902')
+G.add_node("u2")
+G.add_edge("R", "u2", probability=0.4,date ='199902902')
+G.add_node("u00")
+G.add_edge("u0", "u00", probability=0.1,date ='199902902')
+G.add_node("u01")
+G.add_edge("u0", "u01", probability=0.9,date ='199902902')
+G.add_node("u10")
+G.add_edge("u1", "u10", probability=0.5,date ='199902902')
+G.add_node("u11")
+G.add_edge("u1", "u11", probability=0.5,date ='199902902')
+G.add_node("u20")
+G.add_edge("u2", "u20", probability=1.0,date ='199902902')
+plt.figure(figsize=(10,10))
+nx.draw(G, with_labels=True, font_weight='bold')
+plt.subplot(122)
+nx.draw_shell(G, with_labels=True, font_weight='bold')
+plt.show()

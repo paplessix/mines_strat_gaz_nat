@@ -8,7 +8,7 @@ from matrices import Matrices
 
 
 def profit(X,prices) : 
-        return - sum([vol * price for vol,price in zip(X,prices)])
+        return sum([vol * price for vol,price in zip(X,prices)])
 
 class Optimizer :
     def __init__(self,stockage):
@@ -36,5 +36,5 @@ class Optimizer :
         self.c5 = scipy.optimize.NonlinearConstraint(lambda x : self.con_max_inj(x),0, np.inf)
 
     def optimize(self):
-        res = minimize(lambda x:profit(x, self.prices), self.X_0 ,method='SLSQP', constraints = [self.c1,self.c3,self.c4,self.c5])
+        res = minimize(lambda x:profit(x, self.prices), self.X_0 ,method='SLSQP', constraints = [self.c1,self.c3,self.c4,self.c5], options={'disp' : True})
         self.stock.evolution = res.x
