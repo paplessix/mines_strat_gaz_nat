@@ -28,6 +28,8 @@ class DiffusionSpot:
         constructor are the ones for which we wish to estimate volatility.
         The skip parameter is just to skip the first few rows of a dataset if they are strings or non 
         integer values.
+        Path 1 - spot
+        Path 2 - foraward
         '''
         self._dataset = pd.read_csv(path1, header = 0, skiprows = skip)
         if list(self._dataset) != ['Day', 'Price'] and list(self._dataset)!= ['Trading Day', 'Prediction', 'Price']:
@@ -160,7 +162,7 @@ class DiffusionSpot:
             dates.append(next_date.strftime('%Y-%m-%d'))
         return dates
 
-    def pilipovic_fixed_forward(self,start_date:str,end_date:str, summer=True):
+    def pilipovic_fixed_forward(self, start_date:str, end_date:str, summer=True):
         '''
         Numerically solves stochastic differential equation of the pilipovic process.
         Here is considered standard brownian motion at each time step. The considered time
@@ -187,11 +189,31 @@ class DiffusionSpot:
                 alpha = mean_reversion_win
             mean = forward_curve[0, i*4//n]  #should use better date comparison for exact shift in mean value
             G_k = Spot_curve[-1]
-            G_k1 = alpha*(mean - G_k) + sigma*np.random.randn()
+            G_k1 = alpha*(mean - G_k) + sigma*np.random.randn() + G_k
             Spot_curve.append(G_k1)
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         plt.gca().xaxis.set_major_locator(mdates.DayLocator())
         plt.plot(dates, Spot_curve)
+
+    def one_iteration(self, date:str):
+        '''
+        Input a date, will return a future spot price (one iteration of pilipovic process) based 
+        on forward curve and estimated volatilities. Date in %Y-%m-%d.
+        '''
+        if self.string_test(date.split('-')[1], self.summer_months):
+            sigma = self.summer_volatility
+            alpha = self.mean_reversion()
+        else:
+            sigma = self.winter_volatility
+            alpha = self.mean_reversion(False)
+        forward_curve = self.fetch_forward(date)
+        mean = forward_curve[0,0]
+        df = self._dataset
+        G_0 = np.array((df.loc[df['Day'] == date, ['Price']]))[0]
+        return float(alpha*(mean - G_0) + sigma*np.random.randn() + G_0)
+
+
+
 
 
 
