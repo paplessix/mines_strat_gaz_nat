@@ -1,28 +1,25 @@
 import networkx as nx
 import numpy as np 
 import matplotlib.pyplot as plt
-index = np.arange(1,10,10)
-
+index = np.arange(1,10,1)
+index_2 = 10 - np.arange(1,10,1)
 G = nx.DiGraph()
-G.add_node('R')
-G.add_node("u0")
-G.add_edge("R", "u0", probability=0.1, date ='199902902' )
-G.add_node("u1")
-G.add_edge("R", "u1", probability=0.5,date ='199902902')
-G.add_node("u2")
-G.add_edge("R", "u2", probability=0.4,date ='199902902')
-G.add_node("u00")
-G.add_edge("u0", "u00", probability=0.1,date ='199902902')
-G.add_node("u01")
-G.add_edge("u0", "u01", probability=0.9,date ='199902902')
-G.add_node("u10")
-G.add_edge("u1", "u10", probability=0.5,date ='199902902')
-G.add_node("u11")
-G.add_edge("u1", "u11", probability=0.5,date ='199902902')
-G.add_node("u20")
-G.add_edge("u2", "u20", probability=1.0,date ='199902902')
+G.add_node("Root")
+N = 10
+node_name = 'Root'
+node_name_10 = 'Root'
+for index_i,index_j in zip(index,index_2):
+
+    previous = node_name 
+    previous_10 = node_name_10
+    node_name = index_i + index_i*10
+    node_name_10 = index_j + index_i*10
+    G.add_node(node_name, price = index)
+    G.add_node(node_name_10, prince  = index_2)
+    G.add_edge(previous,node_name,probability=1.0/N)
+    G.add_edge(previous_10,node_name_10,probability=1.0/N)
+# model = ScenarioTreeModelFromNetworkX(G)
 plt.figure(figsize=(10,10))
-nx.draw(G, with_labels=True, font_weight='bold')
-plt.subplot(122)
-nx.draw_shell(G, with_labels=True, font_weight='bold')
+nx.draw(G, with_labels=True)
+
 plt.show()
