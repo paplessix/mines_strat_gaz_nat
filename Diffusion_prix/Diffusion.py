@@ -48,17 +48,25 @@ class DiffusionSpot:
         '''
         return any([string == list_str[i] for i in range(len(list_str))])
 
-    def selecting_dataframe(self, years, months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']):
+    def selecting_dataframe(self, years, months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'], date = ''):
         '''
         Function to select the appropriate dataframe from the original one. User can choose months
-        and years he/she wishes to extract from the original dataframe when using the function. It 
-        will be used to extract the summer and winter parameters to create our diffusion model.
+        and years he/she wishes to extract from the original dataframe when using the function.It 
+        will be used to extract the summer and winter parameters to create our diffusion model. 
+        User can also specify a given date until which he chooses to extract the dataframe
+        Date - %Y-%m-%d format.
         '''
         df = self._dataset
         rows = []
         for i in range(len(df)):
             if self.string_test(np.array(df['Day'])[i].split('-')[1], months)  and self.string_test(np.array(df['Day'])[i].split('-')[0], years):
-                rows.append(i)
+                if np.array(df['Day'])[i] == date:
+                    rows.append(i)
+                    df1 = df[df.index.isin(rows)]
+                    df1.dropna(inplace = True)
+                    return df1
+                else:
+                    rows.append(i)
         df1 = df[df.index.isin(rows)]
         df1.dropna(inplace = True) #In case there are missing values
         return df1 
@@ -73,7 +81,7 @@ class DiffusionSpot:
         else:
             months = self.winter_months
         years = self.years
-        df = self.selecting_dataframe(years, months)
+        df = self.selecting_dataframe(years, months, date)
         price = np.array(df['Price'])
         somme_diff = 0
         for i in range(1, len(price)):
@@ -99,7 +107,7 @@ class DiffusionSpot:
         self._winter_volatility = self.short_volatility(False)
         return self._winter_volatility
 
-    def illustrating_mean_reversion(self, summer = True):
+    def illustrating_mean_reversion(self, summer = True, date=''):
         '''
         Function for illustrating before estimating the mean reversion parameter with given historical data.
         Approach supposes the time step is sufficiently small that a naïve description of 
@@ -162,7 +170,7 @@ class DiffusionSpot:
             dates.append(next_date.strftime('%Y-%m-%d'))
         return dates
 
-    def pilipovic_fixed_forward(self, start_date:str, end_date:str, summer=True):
+    def pilipovic_fixed_forward(self, start_date:str, end_date:str):
         '''
         Numerically solves stochastic differential equation of the pilipovic process.
         Here is considered standard brownian motion at each time step. The considered time
@@ -173,9 +181,9 @@ class DiffusionSpot:
         short_vol_win = self.winter_volatility
         mean_reversion_sum = self.mean_reversion()
         mean_reversion_win = self.mean_reversion(False)
-        step = 1 #We consider one spot price given out every day. Even week-ends.
+        years = self.years
         forward_curve = self.fetch_forward(start_date)
-        df = self._dataset
+        df = self.selecting_dataframe(years, date=start_date) #select dataframe up to a given start date
         G_0 = np.array((df.loc[df['Day'] == start_date, ['Price']]))[0]
         Spot_curve = [G_0[0]]
         dates = self.daterange(date(int(start_date.split('-')[0]), int(start_date.split('-')[1]), int(start_date.split('-')[2])), date(int(end_date.split('-')[0]), int(end_date.split('-')[1]), int(end_date.split('-')[2])))
@@ -211,6 +219,17 @@ class DiffusionSpot:
         df = self._dataset
         G_0 = np.array((df.loc[df['Day'] == date, ['Price']]))[0]
         return float(alpha*(mean - G_0) + sigma*np.random.randn() + G_0)
+
+    def multiple_price_scenarios(self, start_date:str, end_date:str, n:int):
+        '''
+        Generates n number of spot price scenarios using a pilipovic process for the evolution 
+        dynamics of the spot price. Forward price is based on future curve at start_date.
+        Date format is %Y-%m-%d
+        '''
+        for _ in range(n):
+            self.pilipovic_fixed_forward(start_date, end_date)
+        plt.show()
+
 
 
 
