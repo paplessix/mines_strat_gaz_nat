@@ -133,12 +133,22 @@ class DiffusionSpot:
         step is a day. The model is run between end_date and end_date_sim. 
         Numerical parameters are estimated between start_date and end_date which is historical data.
         The function takes into account switches between summer and winter in considered time period.
+        End date simul should be no more than 4 months ahead of end_date since there no other forward 
+        prices available.
         '''
         df = self.selecting_dataframe(start_date, end_date)
         short_vol_sum = self.short_volatility(start_date, end_date, summer=True)
         short_vol_win = self.short_volatility(start_date, end_date, winter=True)
+        if short_vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
+            short_vol_sum = short_vol_win
+        elif short_vol_win == 0:
+            short_vol_win = short_vol_sum
         mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
-        mean_reversion_win = self.mean_reversion(start_date, end_date, summer=False)
+        mean_reversion_win = self.mean_reversion(start_date, end_date, winter=True)
+        if mean_reversion_sum == 0:
+            mean_reversion_sum = mean_reversion_win
+        elif mean_reversion_win == 0:
+            mean_reversion_sum = mean_reversion_sum
         forward_curve = self.fetch_forward(end_date)
         G_0 = df['Price'].to_list()[-1]
         Spot_curve = [G_0]
@@ -146,22 +156,70 @@ class DiffusionSpot:
         n = len(dates)
         for i in range(1, n):
             if dates[i].month in self.summer_months:
-                if short_vol_sum == 0 or mean_reversion_sum == 0:
-                    alpha = mean_reversion_win
-                    sigma = short_vol_win
-                else:
-                    sigma = short_vol_sum
-                    alpha = mean_reversion_sum
+                sigma = short_vol_sum
+                alpha = mean_reversion_sum
             else:
-                if short_vol_win == 0 or mean_reversion_sum == 0:
-                    alpha = mean_reversion_sum
-                    sigma = short_vol_sum
-                else:
-                    sigma = short_vol_win
-                    alpha = mean_reversion_win
+                sigma = short_vol_win
+                alpha = mean_reversion_win
             mean = forward_curve[0, i*4//n]  #should use better date comparison for exact shift in mean value
             G_k = Spot_curve[-1]
             G_k1 = alpha*(mean - G_k) + sigma*np.random.randn() + G_k
-            print(G_k1, alpha, mean, sigma, G_k)
             Spot_curve.append(G_k1)
         plt.plot(dates, Spot_curve)
+        return Spot_curve
+
+
+    def one_iteration(self, start_date:str, end_date:str, simul_date:str, spot_price = None):
+        '''
+        Input dates for estimation of parameters and date of simulation, will return a future spot price (one iteration of pilipovic process) based 
+        on forward curve and estimated volatilities. Date in %Y-%m-%d. 
+        If spot price not provided, will just take the spot_price at end day as the current spot price based upon which
+        next step is calculated.
+        '''
+        df = self.selecting_dataframe(start_date, end_date)
+        short_vol_sum = self.short_volatility(start_date, end_date, summer=True)
+        short_vol_win = self.short_volatility(start_date, end_date, winter=True)
+        if short_vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
+            short_vol_sum = short_vol_win
+        elif short_vol_win == 0:
+            short_vol_win = short_vol_sum
+        mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
+        mean_reversion_win = self.mean_reversion(start_date, end_date, summer=False)
+        if mean_reversion_sum == 0:
+            mean_reversion_sum = mean_reversion_win
+        elif mean_reversion_win == 0:
+            mean_reversion_sum = mean_reversion_sum
+        forward_curve = self.fetch_forward(end_date)
+        mean = forward_curve[0, int(simul_date.split('-')[1]) - int(end_date.split('-')[1])]
+        if simul_date.split('-')[1] in self.summer_months:
+            sigma = short_vol_sum
+            alpha = mean_reversion_sum
+        else:
+            sigma = short_vol_win
+            alpha = mean_reversion_win
+        if not spot_price:
+            G_0 = df['Price'].to_list()[-1]
+        else:
+            G_0 = spot_price
+        return float(alpha*(mean - G_0) + sigma*np.random.randn() + G_0)
+
+    def multiple_price_scenarios(self, start_date:str, end_date:str, end_date_sim:str, n:int):
+        '''
+        Generates n number of spot price scenarios using a pilipovic process for the evolution 
+        dynamics of the spot price. Forward price is based on future curve at start_date.
+        Date format is %Y-%m-%d
+        '''
+        tab = []
+        moyenne = []
+        for _ in range(n):
+            tab.append(self.pilipovic_fixed_forward(start_date, end_date, end_date_sim))
+        plt.show()
+        for i in range(n):
+            moyenne.append(sum(tab[k][i] for k in range(len(tab)))/len(tab))
+        dates = self.daterange(end_date, end_date_sim)
+        forward_curve = self.fetch_forward(end_date)
+        curve = forward_curve[0]
+        plt.plot(dates, moyenne)
+        plt.plot(dates, curve)
+        plt.title('Moyenne des scénarios spot en fonction du temps')
+        plt.show()
