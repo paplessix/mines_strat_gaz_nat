@@ -64,14 +64,16 @@ class DiffusionSpot:
         This function returns the volatilty of a certain range of spot prices over the given dataframe.
         Optional parameter allow the user to select only summer or winter months for the volatility.
         The volatility is calculated taking the standard deviation from the series of log of the spot prices.
+        Divide by len(m)-1 to produce an unbiased estimator.
         '''
         df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter)
         price = np.array(df['Price'])
-        somme_diff = 0
         if len(price)!=0:
-            for i in range(1, len(price)):
-                somme_diff += abs(price[i] - price[i-1]) #/abs(price[i-1]) if normalized
-            return somme_diff/len(price)  #*100 if we want percentage
+            series = np.array([np.log(price[i]/price[i-1]) for i in range(1, len(price))])
+            mean = series.mean()
+            series = (series - mean)**2
+            variance = (1/(len(price)-1))*sum(series)
+            return np.sqrt(variance)
         else:
             return 0
 
@@ -108,10 +110,16 @@ class DiffusionSpot:
         '''
         Fetches the right forward price for a given date starting from which we wish to create
         the diffusion spot price model.
+        Be careful, unlike spot prices, there are no forward prices issued on week ends.
+        If given start_date is a week-end, error is raised.
         '''
         df = self.df_forward
-        upcoming_months = df.loc[df['Day'] == datetime.strptime(start_date, '%Y-%m-%d'), ['Month+1', 'Month+2', 'Month+3', 'Month+4']]
-        return np.array(upcoming_months.values)
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        if start_date.weekday() <= 4:
+            upcoming_months = df.loc[df['Day'] == start_date, ['Month+1', 'Month+2', 'Month+3', 'Month+4']]
+            return np.array(upcoming_months.values)
+        else:
+            raise ValueError("The given start_date is a week-end. Please input a week day for the simulation!")
 
     def daterange(self, start_date:str, end_date:str):
         '''
@@ -165,7 +173,6 @@ class DiffusionSpot:
             G_k = Spot_curve[-1]
             G_k1 = alpha*(mean - G_k) + sigma*np.random.randn() + G_k
             Spot_curve.append(G_k1)
-        plt.plot(dates, Spot_curve)
         return Spot_curve
 
 
@@ -207,19 +214,33 @@ class DiffusionSpot:
         '''
         Generates n number of spot price scenarios using a pilipovic process for the evolution 
         dynamics of the spot price. Forward price is based on future curve at start_date.
-        Date format is %Y-%m-%d
+        Date format is %Y-%m-%d. Gives table with all spot curves and a curve of mean calculated 
+        over all spot curves.
         '''
         tab = []
         moyenne = []
-        for _ in range(n):
+        for k in range(n):
             tab.append(self.pilipovic_fixed_forward(start_date, end_date, end_date_sim))
-        plt.show()
-        for i in range(n):
+        for i in range(len(tab[0])):
             moyenne.append(sum(tab[k][i] for k in range(len(tab)))/len(tab))
+        return np.array(tab), np.array(moyenne)
+
+    def show_multiple(self, start_date:str, end_date:str, end_date_sim:str, n:int):
+        tab, moyenne = self.multiple_price_scenarios(start_date, end_date, end_date_sim, n)
         dates = self.daterange(end_date, end_date_sim)
+        fig, ax = plt.subplots()
+        for i in range(len(tab)):
+            ax.plot(dates, tab[i], lw=1)
+        ax.xaxis_date()
+        fig.autofmt_xdate()
+        plt.title(f'{n} Spot price scenarios')
+        plt.ylabel("Spot Price (€/MWh")
+        plt.show()
         forward_curve = self.fetch_forward(end_date)
         curve = forward_curve[0]
-        plt.plot(dates, moyenne)
-        plt.plot(dates, curve)
+        curve = [curve[i*4//len(tab[0])] for i in range(len(tab[0]))]
+        plt.plot(dates, moyenne, lw=2, label='Moyenne prix spot')
+        plt.plot(dates, curve, label='Prix forward')
+        plt.legend()
         plt.title('Moyenne des scénarios spot en fonction du temps')
         plt.show()
