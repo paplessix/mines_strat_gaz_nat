@@ -1,5 +1,7 @@
 from NewDiffusion import DiffusionSpot
 
+#best to run from an anaconda prompt or terminal rather than from interactive console
+
 diff = DiffusionSpot('C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/data_save_02_04/spot_€_MWh_PEG.csv', 'C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/data_save_02_04/forward_€_MWh_PEG.csv')
 start_date = '2020-02-15'
 end_date = '2020-03-30'

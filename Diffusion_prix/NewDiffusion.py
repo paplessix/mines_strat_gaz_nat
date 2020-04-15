@@ -226,6 +226,10 @@ class DiffusionSpot:
         return np.array(tab), np.array(moyenne)
 
     def show_multiple(self, start_date:str, end_date:str, end_date_sim:str, n:int):
+        '''
+        Function to display the multiple price scenarios created as well as the mean curve
+        and forward prices associated.
+        '''
         tab, moyenne = self.multiple_price_scenarios(start_date, end_date, end_date_sim, n)
         dates = self.daterange(end_date, end_date_sim)
         fig, ax = plt.subplots()
