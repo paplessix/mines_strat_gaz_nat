@@ -3,6 +3,7 @@ from stockage import Stockage
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+
 plt.close()
 data =  pd.read_csv('spot_history_HH.csv')
 data = data.iloc[50 :150]

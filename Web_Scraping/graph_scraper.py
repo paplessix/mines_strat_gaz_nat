@@ -55,7 +55,7 @@ class Browser :
         #option.add_argument("--window-size=1920,1080")
         option.add_argument("--start-maximized")
         print(link)
-        self.driver = webdriver.Chrome('C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/githubprojet/mines_strat_gaz_nat/chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
+        self.driver = webdriver.Chrome('chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
         self.driver.get(link)
 
     
