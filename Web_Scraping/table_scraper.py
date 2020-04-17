@@ -1,5 +1,3 @@
-
-
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -30,8 +28,8 @@ class Browser :
     
     def GNL_finder(self):
             blocs  = self.driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
-            self.bloc_month = blocs[-3]
-            self.bloc_season = blocs[-2] # TO DO : Implement  a fonction to distinguish wich div are relevant to scrap
+            self.bloc_month = blocs[-4]
+            self.bloc_season = blocs[-3] # TO DO : Implement  a fonction to distinguish wich div are relevant to scrap
             self.GNL_types_month= self.bloc_month.find_elements_by_tag_name ("li") # Find all possible GNL types
             self.GNL_types_season= self.bloc_season.find_elements_by_tag_name ("li") # Find all possible GNL types
             self.GNL_types_text = [tile.text for tile in self.GNL_types_month]
@@ -83,8 +81,9 @@ class Browser :
         """
         self.chrome_launcher(link)
         self.GNL_finder()
-
+        print(self.GNL_types_season)
         for type_month, type_season in zip( self.GNL_types_month, self.GNL_types_season) : # iterate on this types
+            
             if  (not specific_type)  or (type_season.text in specific_type):        
                 # Change GNL types 
                 webdriver.ActionChains(self.driver).double_click(type_season).perform()
@@ -119,8 +118,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
-
-
-
 
