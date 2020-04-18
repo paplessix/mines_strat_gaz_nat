@@ -20,28 +20,33 @@ class Scenario_builder():
         self.tree = np.array(tree)
         self.tree_prob  = np.ones(self.n_scen)/self.n_scen
         plt.plot(self.tree, color = 'b')
+        plt.show()
 
     def distance_scen_pair(self, i, j,t_max):
         return sum(abs(self.tree.transpose()[i][:t_max]-self.tree.transpose()[j][:t_max]))
     
     n_scen = property(lambda self : len(self.tree[0]))
     T = property(lambda self: len(self.tree))
-    def mat_distance_scen(self):
+    def mat_distance_scen(self, T_max):
         index = {i for i in range(self.n_scen)}
         C_K_J = []
         for k in range(self.n_scen):
             C_J = []
             for j in range(self.n_scen):
-                C_J.append(self.distance_scen_pair(k,j,self.T))
+                C_J.append(self.distance_scen_pair(k,j,T_max))
             C_K_J.append(C_J)
         C_K_J = np.array(C_K_J)
         self.C_K_J = C_K_J
 
-    def backward_reduction(self, n_deletion):
+    def backward_reduction(self, n_deletion, T_max = False):
+        if T_max == False:
+            T_max = self.T
+        else:
+            pass
         index = {i for i in range(self.n_scen)}
         J = set()
         C_LL = np.zeros(self.n_scen)
-        self.mat_distance_scen()
+        self.mat_distance_scen(T_max)
         for l in range(self.n_scen):
             C_LL[l] = min(self.C_K_J[l][list(index.difference(J|{l}))])
         z_L = self.tree_prob*C_LL
@@ -63,11 +68,15 @@ class Scenario_builder():
         return J 
     
 
-    def backward_reduction_iter(self):
-        index = {i for i in range(self.n_scen)}
+    def backward_reduction_iter(self, index, T_max = False):
+
+        if T_max == False:
+            T_max = self.T
+        else:
+            pass
         J = set()
         C_LL = np.zeros(self.n_scen)
-        self.mat_distance_scen()
+        self.mat_distance_scen(T_max)
         while len(J)< self.n_scen:
             Z_L = []
             for  l in index.difference(J):
@@ -102,34 +111,43 @@ class Scenario_builder():
 
     def plot_tree(self):
         plt.plot(self.tree, color = 'r')
+        plt.show()
 
     def scenario_tree_construction(self,epsilon):
         index = {i for i in range(self.n_scen)}
-        for k in range(self.n_scen):
-            iter_J = backward_reduction_iter()
+        print(index)
+        for pas in range(1,self.T+1):
+            ## Reduction 
+            
+            iter_J = self.backward_reduction_iter(index,self.T-pas+1)
             J,Z = next(iter_J)
-            while Z < epsilon
+            while Z < epsilon:
                 J,Z = next(iter_J)
+            print('k',pas)
+            print('I',index)
+            print('J',J)
+            
+            # scenario bundling
+            for j in J :
+                i = np.argmin(self.C_K_J[j][list(index.difference(J))])
+                i= list(index.difference(J))[i]
+                self.tree_prob[i] += self.tree_prob[j]
+                print(len(self.tree))
+                print(self.T-pas+1)
+                self.tree[:self.T-pas+1,j] = self.tree[:self.T-pas+1,i]
+            plt.plot(self.tree)
+            plt.show()
             index = index.difference(J)
-            for i in J :
-                j = np.argmin(self.C_K_J[i][list(index.difference(J))])
-                j = list(index.difference(J))[j]
-                # assert not j in J : A passer en test 
-                tree_prob[j] += tree_prob[i]
-    
+
+
+            for i in range(2,self.n_scen):
+                pass
 
 
 builder = Scenario_builder()
+plt.show()
 builder.data_loader('test.csv')
-a = builder.backward_reduction_iter()
-print(next(a))
-print(next(a))
-print(next(a))
-
+builder.scenario_tree_construction(3)
 
 
 builder.plot_tree()
-
-
-    # def delete_scenario( tree, tree_prob,J):
-    #         r
