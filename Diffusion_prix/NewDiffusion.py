@@ -24,6 +24,7 @@ class DiffusionSpot:
         integer values.
         Path 1 - spot
         Path 2 - forward
+        Weekends - included or not in the dataframe. 
         '''
         self._dataset = pd.read_csv(path1, header = 0, skiprows = skip)
         if list(self._dataset) != ['Day', 'Price'] and list(self._dataset) != ['Day', 'Prediction', 'Price']:
@@ -36,6 +37,7 @@ class DiffusionSpot:
         self.winter_months = winter_months
         self._summer_volatility = 0
         self._winter_volatility = 0
+        self._weekends = True   #property will check automatically if week-ends are included or not in the initial dataframe
 
     def selecting_dataframe(self, start_date:str, end_date:str, spot=True, summer=False, winter=False):
         '''
@@ -51,6 +53,9 @@ class DiffusionSpot:
         else: 
             df = self.df_forward
         start_date, end_date = datetime.strptime(start_date, '%Y-%m-%d'), datetime.strptime(end_date, '%Y-%m-%d')
+        if not self.weekends:                    #check if user input date is not a weekend if weekends are not included in df
+            if start_date.weekday() > 4 or end_date.weekday() > 4:
+                raise ValueError("The dataframe does not have WE, do not input start or end date as WE.")
         df = df.loc[(df['Day'] >= start_date) & (df['Day']<= end_date)]
         if summer:
             df = df.loc[df['Day'].apply(lambda x:x.month in self.summer_months)]
@@ -72,7 +77,7 @@ class DiffusionSpot:
             series = np.array([np.log(price[i]/price[i-1]) for i in range(1, len(price))])
             mean = series.mean()
             series = (series - mean)**2
-            variance = (1/(len(price)-1))*sum(series)
+            variance = (1/(len(price)-1))*sum(series)  #unbiased estimator
             return np.sqrt(variance)
         else:
             return 0
@@ -104,7 +109,7 @@ class DiffusionSpot:
             slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y )
             return abs(slope)
         else:
-            return 0
+            return 0  #if df to estimate mean_reversion parameter does not have data 
     
     def fetch_forward(self, start_date):
         '''
@@ -131,7 +136,11 @@ class DiffusionSpot:
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
         for n in range(int((end_date - start_date).days)):
             next_date = start_date + timedelta(n)
-            dates.append(next_date)
+            if self.weekends:
+                 dates.append(next_date)
+            else: 
+                if next_date.weekday() <= 4:
+                    dates.append(next_date)  
         return dates
 
     def pilipovic_fixed_forward(self, start_date:str, end_date:str, end_date_sim:str):
@@ -248,3 +257,15 @@ class DiffusionSpot:
         plt.legend()
         plt.title('Moyenne des scénarios spot en fonction du temps')
         plt.show()
+
+    @property
+    def weekends(self):
+        '''
+        Function to detect if w-e are included or not in the dataframe
+        '''
+        df = self._dataset['Day'][:10]
+        self._weekends = False
+        for element in df:
+            if element.weekday() > 4:
+                self._weekends = True
+        return self._weekends
