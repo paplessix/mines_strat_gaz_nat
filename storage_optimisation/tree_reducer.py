@@ -96,7 +96,6 @@ class Scenario_builder():
         tree_prob = self.tree_prob
         b = sum(self.tree_prob)
         J = self.backward_reduction(n_deletion)
-        print(J)
         for i in J :
             j = np.argmin(self.C_K_J[i][list(index.difference(J))])
             j = list(index.difference(J))[j]
@@ -115,39 +114,50 @@ class Scenario_builder():
 
     def scenario_tree_construction(self,epsilon):
         index = {i for i in range(self.n_scen)}
-        print(index)
-        for pas in range(1,self.T+1):
+        boundings = {}
+        for pas in range(1,self.T):
             ## Reduction 
             
             iter_J = self.backward_reduction_iter(index,self.T-pas+1)
             J,Z = next(iter_J)
             while Z < epsilon:
                 J,Z = next(iter_J)
-            print('k',pas)
-            print('I',index)
-            print('J',J)
+            # print('k',pas)
+            # print('I',index)
+            # print('J',J)
             
             # scenario bundling
             for j in J :
                 i = np.argmin(self.C_K_J[j][list(index.difference(J))])
                 i= list(index.difference(J))[i]
                 self.tree_prob[i] += self.tree_prob[j]
-                print(len(self.tree))
-                print(self.T-pas+1)
                 self.tree[:self.T-pas+1,j] = self.tree[:self.T-pas+1,i]
+                transfer_bound = [j]
+                if j in boundings.keys():
+                    bounds = boundings[j]
+                    for q in bounds:
+                        self.tree[:self.T-pas+1,q] = self.tree[:self.T-pas+1,i]
+                    transfer_bound.append(j)
+                if i in boundings.keys():
+                    boundings[i] = boundings[i]+transfer_bound
+                else : 
+                    boundings[i] = transfer_bound
             plt.plot(self.tree)
             plt.show()
-            index = index.difference(J)
-
-
             for i in range(2,self.n_scen):
                 pass
+            index = index.difference(J)
+            if len(index) <= 1 :
+                break
+
+
+
 
 
 builder = Scenario_builder()
 plt.show()
 builder.data_loader('test.csv')
-builder.scenario_tree_construction(3)
+builder.scenario_tree_construction(7)
 
 
 builder.plot_tree()

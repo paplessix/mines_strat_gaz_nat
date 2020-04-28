@@ -120,7 +120,7 @@ def tree_generation(T,bushiness, initial_price):
 
 
 G = tree_generation(4,3,2)
-plt.figure(figsize=(20,20))
+plt.figure(figsize=(10,10))
 nx.draw_shell(G, with_labels=True)
 plt.show()
 
