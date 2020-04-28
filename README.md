@@ -18,7 +18,7 @@ Lorsque l'on s'intéresse à la structure générale du site, on comprend mieux 
 
 Cependant le principal problème est que les données ne sont pas stoquées en propre dans le code du site, mais son acquise par une requête d'un script `JavaScript` à une base de donnée extérieure au site. Il est donc nécessaire de se rapprocher le plus possible du comportement utilisateur. 
 
-On utilise don un module qui permet donc de cliquer sur des boutons. Pour se placer à chaque fois dans les configurations où l'on a accès aux données dans le code HTML. On utilise alors un Parser pour récupérer les données brutes
+On utilise donc un module qui permet donc de cliquer sur des boutons. Pour se placer à chaque fois dans les configurations où l'on a accès aux données dans le code HTML. On utilise alors un Parser pour récupérer les données brutes
 
 Dans le cadre de la lecture d'un Graphe, il st nécessaire de pouvoir passer la souris au dessus de la courbe pour avoir accès aux valeurs de prix à cet instant. Encore une fois dans le cas contraire ces données ne sont pas accesible dans le code de la page. On fait donc bouger la souris d'un pas suffisament petit pour passer au dessus de tous les points du graphique. 
 
@@ -70,4 +70,21 @@ Tests mis en place :
 
 ## Partie 3 : Optimisation du stockage
 ------------------
+
+La première étape consiste à optimiser la gestion d'un stockage de Gaz naturel en supposant que l'on connait parfaitement le prix du Gaz Naturel sur toute une période donnée.
+
+### Modélisation
+
+On va modéliser un Stockage souterrain de Gaz cela correspond à la Classe `Stockage` définie dans `storage_optimisation/stockage.py`.
+- Le stockage possède des contraintes intrinsèques que sont essentiellement sont volume et son remplissage au début de la période
+- Le Stockage possède des débits d'injection et de soutirage qui varient en fonction du remplissage
+- Dans une optique d'assurer des stocks stratégiques, le stockage doit être quasimment plein au début de l'hiver. Et dans une volonté d'assurer la pérennité du stockage, celui-ci doit être quasi-vide au début de l'été. Cela se représente par des fonctions portes que doit éviter le volume de remplissage du stockage
+
+- Les règles dépendent des caractéristiques des  différents stockage, c'ets pourquoi l'on travaillera avec sous-classes, correspondant avec des stockages, ayant des valeurs nominales différentes. Certains sont des stockages à la grande capacité mais très peu flexible sur l'achat-cente, quand d'autres sont beaucoup plus flexibles 
+
+Le stockage est don définit par la classe `Stockage`, qui se construit à partir d'un volume maximal `Vmax`, un volume initial `Vinit`, les prix sur une période `data`, mais aussi la vente algébrique pour chacun de ces jours `evolution`. 
+
+La classe `Stockage` possède les attibuts
+- `Vmax`,`data`,`Vinit`,`evolution`
+- 
 
