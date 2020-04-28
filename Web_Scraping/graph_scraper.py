@@ -128,8 +128,7 @@ class Browser :
                 dates, prediction_types, prices  = [],[],[]
                 last_date = None
                 step = 10
-                while active_pos_x <= max_x-2   :
-                    
+                while active_pos_x <= max_x-2   :                   
                     label = self.driver.find_element_by_class_name("highcharts-label")
                     texte = label.find_element_by_tag_name("text")
                     texte = texte.find_elements_by_tag_name("tspan")
