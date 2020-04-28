@@ -60,6 +60,9 @@ class Browser :
 
     
     def GNL_finder(self):
+        """
+        Find a list of all the successive GNL types present on the website.
+        """
         blocs  = self.driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
         self.bloc = blocs[0]
         self.GNL_types = self.bloc.find_elements_by_tag_name ("li")
@@ -125,7 +128,7 @@ class Browser :
                 dates, prediction_types, prices  = [],[],[]
                 last_date = None
                 step = 10
-                while active_pos_x <= max_x   :
+                while active_pos_x <= max_x-2   :
                     
                     label = self.driver.find_element_by_class_name("highcharts-label")
                     texte = label.find_element_by_tag_name("text")
