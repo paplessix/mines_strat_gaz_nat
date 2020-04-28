@@ -34,7 +34,7 @@ class DiffusionSpot:
         if forward_diffusion:
             self.df_forward = pd.read_csv(path2)
             self.df_forward.rename(columns = {'Trading Day':'Day'}, inplace=True)
-            self.df_forward['Day'] = pd.to_datetime(self.df_forward['Day']) #convert dates to datetime
+            self.df_forward['Day'] = pd.to_datetime(self.df_forward['Day'], infer_datetime_format=True) #convert dates to datetime
         self.summer_months = summer_months
         self.winter_months = winter_months
         self._weekends = True   #property will check automatically if week-ends are included or not in the initial dataframe
@@ -55,8 +55,10 @@ class DiffusionSpot:
             df = self.df_forward
         start_date, end_date = datetime.strptime(start_date, '%Y-%m-%d'), datetime.strptime(end_date, '%Y-%m-%d')
         if not self.weekends:                    #check if user input date is not a weekend if weekends are not included in df
-            if start_date.weekday() > 4 or end_date.weekday() > 4:
-                raise ValueError("The dataframe does not have WE, do not input start or end date as WE.")
+            if start_date.weekday() > 4:
+                raise ValueError(f"The dataframe does not have WE, do not input {start_date}.")
+            if end_date.weekday() > 4:
+                raise ValueError(f"The dataframe does not have WE, do not input {end_date}.")
         df = df.loc[(df['Day'] >= start_date) & (df['Day']<= end_date)]
         if summer:
             df = df.loc[df['Day'].apply(lambda x:x.month in self.summer_months)]
@@ -65,7 +67,7 @@ class DiffusionSpot:
         df.dropna(inplace = True) #In case there are missing values
         return df
 
-    def volatility(self, start_date:str, end_date:str, summer=False, winter=False):
+    def volatility(self, start_date:str, end_date:str, summer=False, winter=False, annualized=False):
         '''
         This function returns the volatilty of a certain range of spot prices over the given dataframe.
         Optional parameter allow the user to select only summer or winter months for the volatility.
@@ -79,7 +81,13 @@ class DiffusionSpot:
             mean = series.mean()
             series = (series - mean)**2
             variance = (1/(len(price)-1))*sum(series)  #unbiased estimator
-            return np.sqrt(variance)
+            if annualized:
+                if self.weekends:
+                    return np.sqrt(variance/365)
+                else:
+                    return np.sqrt(variance/252) #252 trading days if weekends not included
+            else:
+                return np.sqrt(variance)
         else:
             return 0
 
@@ -90,7 +98,7 @@ class DiffusionSpot:
         the U-O process can be taken. We will use a least-squares regression to regress the value
         of the rate of mean-reversion. We plot G_{t+1} - G_{t} = Y against G{t} = X
         '''
-        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter)
+        df = self.selecting_dataframe(start_date, end_date, summer = summer, winter = winter)
         price = np.array(df['Price'])
         Y = [price[i] - price[i-1] for i in range(1, len(price))]
         plt.scatter(price[:-1], Y, color = 'r', marker = 'o' )
@@ -156,29 +164,29 @@ class DiffusionSpot:
         '''
         dates = self.daterange(end_date, end_date_sim)
         n = len(dates)
-        vol_sum = self.volatility(start_date, end_date, summer=True)
-        vol_win = self.volatility(start_date, end_date, winter=True)
+        self.vol_sum = self.volatility(start_date, end_date, summer=True)
+        self.vol_win = self.volatility(start_date, end_date, winter=True)
         means, self.forward_curve = [], []  #These two are mutually exclusive, we only use one or the other
-        long_term_vol = 0
-        if vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
-            vol_sum = vol_win
-        elif vol_win == 0:
-            vol_win = vol_sum
-        mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
-        mean_reversion_win = self.mean_reversion(start_date, end_date, winter=True)
-        if mean_reversion_sum == 0:
-            mean_reversion_sum = mean_reversion_win
-        elif mean_reversion_win == 0:
-            mean_reversion_sum = mean_reversion_sum
-        volatilities = np.array([vol_sum if (dates[i].month in self.summer_months) else vol_win for i in range(n)])
-        mean_reversions = np.array([mean_reversion_sum if (dates[i].month in self.summer_months) else mean_reversion_win for i in range(n)])
+        self.long_term_vol = 0
+        if self.vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
+            self.vol_sum = self.vol_win
+        elif self.vol_win == 0:
+            self.vol_win = self.vol_sum
+        self.mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
+        self.mean_reversion_win = self.mean_reversion(start_date, end_date, winter=True)
+        if self.mean_reversion_sum == 0:
+            self.mean_reversion_sum = self.mean_reversion_win
+        elif self.mean_reversion_win == 0:
+            self.mean_reversion_sum = self.mean_reversion_sum
+        volatilities = np.array([self.vol_sum if (dates[i].month in self.summer_months) else self.vol_win for i in range(n)])
+        mean_reversions = np.array([self.mean_reversion_sum if (dates[i].month in self.summer_months) else self.mean_reversion_win for i in range(n)])
         if self.forward_diffusion:
             self.forward_curve = self.fetch_forward(end_date)  #needs to be accessed by multiple functions
         else: #to avoid expensive computation if not necessary
             mean = np.mean(np.array(self.selecting_dataframe(start_date_long, end_date_long)['Price']))
-            long_term_vol = self.volatility(start_date_long, end_date_long)
+            self.long_term_vol = self.volatility(start_date_long, end_date_long, annualized=True)
             Brownian_motion = np.cumsum(np.random.randn(n))
-            means = mean + long_term_vol*Brownian_motion
+            means = mean + self.long_term_vol*Brownian_motion
         df = self.selecting_dataframe(end_date, end_date) #for start price of diffusion model
         start_price = float(df['Price'])
         self.dates = dates
@@ -242,10 +250,10 @@ class DiffusionSpot:
             ax2.plot(dates, curve, label='Prix forward', lw=2)
         else:
             curve = means
-            ax2.plot(dates, curve, label='Mean with variation due to long term volatility', lw=2)
-        ax2.plot(dates, moyenne, lw=2, label='Moyenne prix spot')
+            ax2.plot(dates, curve, label='Long Term Mean with variation', lw=2)
+        ax2.plot(dates, moyenne, lw=2, label='Mean of diffusion scenarios')
         ax2.set_ylabel('€/MWh')
-        ax2.set_title('Mean of spot scenarios')
+        ax2.legend(loc='upper left')
         plt.show()
 
     @property
@@ -269,26 +277,26 @@ class DiffusionSpot:
     #     next step is calculated.
     #     '''
     #     df = self.selecting_dataframe(start_date, end_date)
-    #     vol_sum = self.volatility(start_date, end_date, summer=True)
-    #     vol_win = self.volatility(start_date, end_date, winter=True)
-    #     if vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
-    #         vol_sum = vol_win
-    #     elif vol_win == 0:
-    #         vol_win = vol_sum
-    #     mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
-    #     mean_reversion_win = self.mean_reversion(start_date, end_date, summer=False)
-    #     if mean_reversion_sum == 0:
-    #         mean_reversion_sum = mean_reversion_win
-    #     elif mean_reversion_win == 0:
-    #         mean_reversion_sum = mean_reversion_sum
+    #     self.vol_sum = self.volatility(start_date, end_date, summer=True)
+    #     self.vol_win = self.volatility(start_date, end_date, winter=True)
+    #     if self.vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
+    #         self.vol_sum = self.vol_win
+    #     elif self.vol_win == 0:
+    #         self.vol_win = self.vol_sum
+    #     self.mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
+    #     self.mean_reversion_win = self.mean_reversion(start_date, end_date, summer=False)
+    #     if self.mean_reversion_sum == 0:
+    #         self.mean_reversion_sum = self.mean_reversion_win
+    #     elif self.mean_reversion_win == 0:
+    #         self.mean_reversion_sum = self.mean_reversion_sum
     #     forward_curve = self.fetch_forward(end_date)
     #     mean = forward_curve[int(simul_date.split('-')[1]) - int(end_date.split('-')[1])]
     #     if simul_date.split('-')[1] in self.summer_months:
-    #         sigma = vol_sum
-    #         alpha = mean_reversion_sum
+    #         sigma = self.vol_sum
+    #         alpha = self.mean_reversion_sum
     #     else:
-    #         sigma = vol_win
-    #         alpha = mean_reversion_win
+    #         sigma = self.vol_win
+    #         alpha = self.mean_reversion_win
     #     if not spot_price:
     #         G_0 = df['Price'].to_list()[-1]
     #     else:
