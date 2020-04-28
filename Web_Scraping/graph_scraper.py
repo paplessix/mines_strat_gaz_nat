@@ -70,7 +70,7 @@ class Browser :
         print(self.GNL_types_text)
 
 
-    def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data"  ):
+    def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data", bloc_number = 0  ):
         """Function that determine the last price of GNL in a graph
         Still need to do multiple type of GNL and more than one day (probleme des WE)
         For now just catch he last value but could catch all the values 
@@ -95,9 +95,9 @@ class Browser :
 
                 # find the graph
 
-                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
+                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[bloc_number]
                 string_data = chart_container.value_of_css_property("d")
-                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
+                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[bloc_number]
                 webdriver.ActionChains(self.driver).move_to_element(chart_container).perform()
                 pos_data = pos_data_extract(string_data)
                 ####
