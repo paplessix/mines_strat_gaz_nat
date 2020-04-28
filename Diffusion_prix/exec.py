@@ -8,7 +8,8 @@ diff = DiffusionSpot(path1, path2)
 start_date_long, start_date = '2020-02-15', '2020-02-15'   #Due to non availability of data on a longer time scale.
 end_date_long, end_date = '2020-03-30', '2020-03-30'
 end_date_sim = '2020-07-30'
-diff.show_multiple(start_date_long, end_date_long, start_date, end_date, end_date_sim, 20)
+tab, moyenne, means, n = diff.multiple_price_scenarios(start_date_long, end_date_long, start_date, end_date, end_date_sim, 20)
+diff.show_multiple(tab, moyenne, means, n)
 # diff.illustrating_mean_reversion(start_date, end_date) #optional to illustrate mean reversion, we see the parameter is quite close to 0.
 
 
