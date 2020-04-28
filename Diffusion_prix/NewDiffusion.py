@@ -222,7 +222,7 @@ class DiffusionSpot:
             tab.append(self.pilipovic_fixed_forward(volatilities, mean_reversions, means, p, start_price))
         for i in range(len(tab[0])):
             moyenne.append(sum(tab[k][i] for k in range(len(tab)))/len(tab))
-        return np.array(tab), np.array(moyenne), means, n
+        return tab, moyenne, means, n
 
     def show_multiple(self, tab, moyenne, means, n):
         '''
