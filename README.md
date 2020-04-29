@@ -46,6 +46,9 @@ Le Package en lui-même est composé de 3 sous-modules :
       - Dans l'ordre `unit, active, table `
     - La fonction lève des exceptions quand : 
       - Top
+
+  > Ces deux modules ont donc une architecture assez similaire, et les méthodes de Scrapping, que ce soit dans le cadre de graphe, ou bien dans le cadre de tableaux, sont intégrés dans une classe `Browser`.
+  
   > Ces deux premiers modules reposent sur un driver, `chromedriver.exe`, fournit avec le repo, et disponible à la racine du Repo. Il est nécessaire de posséder Chrome pour faire fonctionner les tâches automatisées. 
 - `scrap_saver` : Fonction qui construit et update la base de données à partir des données fournies par <a href= #table_scraper>`table_scraper`</a> et `graph_scraper`, en deux partie, il scrappe d'abord toutes les données du jour, et enfin il ajoute aux données existantes les données qui n'ont pas été encore enregistrées. 
   > On considère ici que il n'y a pas de consolidation à posteriori des données. Faisant que les données précedemment enregistrées ne puissent plus être considérée valables
