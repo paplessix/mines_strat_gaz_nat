@@ -12,7 +12,6 @@ def pos_data_extract(string_data :str):
 
     data = list(map(float,map (test_quote ,list(filter(lambda x : not("M" in x or "L" in x ), string_data.split(' '))))))
     coordinates_couple = [ i for i in chunks(data,2)]
-    print(coordinates_couple)
     return coordinates_couple
 
 def test_quote( string , carac ='"' ):
@@ -54,7 +53,7 @@ class Browser :
 
         #option.add_argument("--window-size=1920,1080")
         option.add_argument("--start-maximized")
-        print(link)
+        print(' Loading url',link)
         self.driver = webdriver.Chrome('chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
         self.driver.get(link)
 
@@ -70,7 +69,7 @@ class Browser :
         print(self.GNL_types_text)
 
 
-    def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data", bloc_number = 0  ):
+    def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data", bloc_number = 0 ):
         """Function that determine the last price of GNL in a graph
         Still need to do multiple type of GNL and more than one day (probleme des WE)
         For now just catch he last value but could catch all the values 
@@ -87,8 +86,11 @@ class Browser :
         
         self.GNL_finder()
         for GNL_type in self.GNL_types :
-            if  (not specific_type)  or (type_season.text in specific_type):
+            if  (not specific_type)  or (GNL_type.text in specific_type):
+                
+                time.sleep(1)
                 webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# click on the button
+                webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# On double pou être sur que ça marche
                 time.sleep(5)
 
                 active = self.bloc.find_element_by_class_name('active').text

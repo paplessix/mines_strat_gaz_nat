@@ -1,9 +1,10 @@
-from Web_Scraping.table_scraper import Browser as Browser_forward
-from Web_Scraping.graph_scraper import Browser as Browser_spot # to change
+from table_scraper import Browser as Browser_forward
+from graph_scraper import Browser as Browser_spot # to change
 import datetime
 import csv
 import pandas as pd
 import sys
+import argparse
 import os 
 
 
@@ -20,7 +21,7 @@ def list_csv_dir( directory):
     """
     Sparse all the csv files present in the active directory
     """
-    files = list(filter(lambda x : x[-4:]=='.csv',os.listdir(directory)))
+    files = list(map(lambda x : directory +'/'+ x, filter(lambda x : x[-4:]=='.csv',os.listdir(directory))))
     return files 
 
 
@@ -44,6 +45,7 @@ def data_updater(directory, price_type, specific_type = False ):
     functions= {"forward": Browser_forward, "spot" : Browser_spot }
     browser = functions[price_type]()
     list_csv = list_csv_dir(directory)
+    print(list_csv)
     for info, active, table in browser.scraper_iterator( specific_type): 
         table['Trading Day'] = pd.to_datetime(table['Trading Day'],format = '%Y-%m-%d')
         table = table.sort_values('Trading Day')
@@ -53,18 +55,31 @@ def data_updater(directory, price_type, specific_type = False ):
             existing_data = existing_data.sort_values('Trading Day')
             existing_data['Trading Day'] = pd.to_datetime(existing_data['Trading Day'],format = '%Y-%m-%d')
             last_date  = max(existing_data['Trading Day'])
-            table['Trading Day'] = pd.to_datetime(table['Trading Day'],format = '%Y-%m-%d')
+            print(' last_recorded_date', last_date)
             table = table[ table['Trading Day'] > last_date ]
-            table = table.sort_values('Trading Day')
             existing_data = existing_data.append(table, sort = False)
             existing_data.to_csv(filename, index = False)
         else : 
             table.to_csv(filename, index = False) 
         
 def main():
-    # data_initializer('./Web_Scraping','forward')
-    data_updater('./Web_Scraping/last_save','forward')
-    data_updater('./Web_Scraping/last_save','spot')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d","--directory", help="where to update files")
+    parser.add_argument("-p","--product", help =" Prodct type required default = ['spot','forward]")
+    parser.add_argument("-s","--specific", help = "Specific market desired")
+    args = parser.parse_args()
+    if not args.directory :
+        directory  = './Web_Scraping/last_save'
+    else : 
+        directory = args.directory
+    
+    if args.product == 'spot':
+        data_updater(directory,'spot', args.specific)
+    elif args.product == 'forward':
+        data_updater(directory,'forward',args.specific)
+    else : 
+        data_updater('./Web_Scraping/last_save','forward',args.specific)
+        data_updater('./Web_Scraping/last_save','spot', args. specific)
 
 if __name__ == '__main__':
     sys.exit(main())
