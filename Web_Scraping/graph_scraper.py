@@ -1,92 +1,156 @@
 from selenium import webdriver 
-from selenium.webdriver.common.by import By 
-from selenium.webdriver.support.ui import WebDriverWait 
-from selenium.webdriver.support import expected_conditions as EC 
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 import time
 import datetime
+import sys
+import pandas as pd
+
+def pos_data_extract(string_data :str):
+
+    data = list(map(float,map (test_quote ,list(filter(lambda x : not("M" in x or "L" in x ), string_data.split(' '))))))
+    coordinates_couple = [ i for i in chunks(data,2)]
+    print(coordinates_couple)
+    return coordinates_couple
+
+def test_quote( string , carac ='"' ):
+    if carac in string:
+        return string[:-2]
+    else : 
+        return string
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 
-def graph_scraper(link ="https://www.powernext.com/futures-market-data"  ):
-    """Function that determine the last price of GNL in a graph
-    Still need to do multiple type of GNL and more than one day (probleme des WE )
-    For now just catch he last value but could catch all the values 
-    In order to unify with table_scraper.py
-    Return : 
-        - title : str ( maybe useless)
-        - info : str ( type of price and unit change this ? )
-        - active : str ( the type of GNL)
-        - data : pd.DataFrame ()
 
+def data_list_append(prices, price, dates, date,prediction_types, prediction_type ):
+    """ Function to help add new data to the list of data
+    Handle the WE doublon
     """
+    if '/' in date:
+        prices.append(price)
+        prediction_types.append(prediction_type)
+        dates.append(date[:-3])
+        prices.append(price)
+        prediction_types.append(prediction_type)
+        dates.append(date[:-5]+date[-2:])  
+    else : 
+        prices.append(price)
+        prediction_types.append(prediction_type)
+        dates.append(date)  
+class Browser :
+    def __init__(self):
+        self.delay = 10
 
-    # Find yesterday's date 
-    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    def chrome_launcher(self,link):
+        # Create a new instance of Chrome
+        option = webdriver.ChromeOptions()
+
+        #option.add_argument("--window-size=1920,1080")
+        option.add_argument("--start-maximized")
+        print(link)
+        self.driver = webdriver.Chrome('./chromedriver.exe',chrome_options=option)  # Optional argument, if not specified will search path.
+        self.driver.get(link)
+
     
-    # Create a new instance of Chrome
-    option = webdriver.ChromeOptions()
-    option.add_argument("— incognito")
-
-    driver = webdriver.Chrome('C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/githubprojet/mines_strat_gaz_nat/chromedriver.exe')  # Optional argument, if not specified will search path.
-    driver.get(link)
-    
-    #time.sleep(2) # Let the user actually see something!
-
-    #find the graph
-    web_object = driver.find_element_by_class_name('highcharts-graph')
-
-    pos_data = web_object.value_of_css_property("d")
-    pos_data = str(pos_data)
-    pos_data = pos_data.split(' ')
+    def GNL_finder(self):
+        blocs  = self.driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
+        self.bloc = blocs[0]
+        self.GNL_types = self.bloc.find_elements_by_tag_name ("li")
+        self.GNL_types_text = [tile.text for tile in self.GNL_types]
+        print(self.GNL_types_text)
 
 
-    ####
-    # A terme remplacer ici par le Min et le Max dees valeurs de x et de y pour avoir la vrai valeur de la hauteur 
+    def scraper_iterator(self,specific_type = False, link ="https://www.powernext.com/spot-market-data"  ):
+        """Function that determine the last price of GNL in a graph
+        Still need to do multiple type of GNL and more than one day (probleme des WE )
+        For now just catch he last value but could catch all the values 
+        In order to unify with table_scraper.py
+        Return : 
+            - title : str ( maybe useless)
+            - info : str ( type of price and unit change this ? )
+            - active : str ( the type of GNL)
+            - data : pd.DataFrame ()
 
+        """ 
+        self.chrome_launcher(link)           
+        time.sleep(2) # Let the user actually see something!
+        
+        self.GNL_finder()
+        for GNL_type in self.GNL_types :
+            if  (not specific_type)  or (type_season.text in specific_type):
+                webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# click on the button
+                time.sleep(5)
 
-    pos_data_init = pos_data[1:3]
-    pos_data_init[0]= float(pos_data_init[0])
-    pos_data_init[1]= float(pos_data_init[1])
+                active = self.bloc.find_element_by_class_name('active').text
 
-    #### Fin des trucs à changer 
+                # find the graph
 
-    # last position 
-    pos_data_of_the_day = pos_data[-2:]
-    pos_data_of_the_day[0]= float(pos_data_of_the_day[0])
-    pos_data_of_the_day[1]= float(pos_data_of_the_day[1][:-2])
+                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
+                string_data = chart_container.value_of_css_property("d")
+                chart_container = self.bloc.find_elements_by_class_name('highcharts-graph')[0]
+                webdriver.ActionChains(self.driver).move_to_element(chart_container).perform()
+                pos_data = pos_data_extract(string_data)
+                ####
+                init_pos_x = pos_data[0][0]
+                init_pos_y = pos_data[0][1]
+                min_x = min(pos_data, key= lambda x : x[0])[0]
+                max_x = max(pos_data, key= lambda x : x[0])[0]
+                min_y = min(pos_data, key= lambda x : x[1])[1]
+                max_y = max(pos_data, key= lambda x : x[1])[1]
+                # Height and Width of the box
+                width = max_x - min_x
+                height = max_y - min_y
+                # Determine coordinate of the middle of the box
+                origin_x = chart_container.rect['x']  
+                origin_y = chart_container.rect['y']
+                pos_abs_middle_x = width/2 + origin_x + min_x
+                pos_abs_middle_y = height/2 + origin_y + min_y
+              
+                active_pos_x = pos_abs_middle_x
+                active_pos_y = pos_abs_middle_y
 
-    # Height and Width of the box
-    width = pos_data_of_the_day[0] - pos_data_init[0]
-    height = pos_data_of_the_day[1] - pos_data_init[1]
+                offset_x = init_pos_x + origin_x - active_pos_x
+                offset_y = init_pos_y + origin_y - active_pos_y
+                webdriver.ActionChains(self.driver).move_by_offset(offset_x,offset_y).perform()
+                active_pos_x = init_pos_x
+                active_pos_y = init_pos_y
 
+                dates, prediction_types, prices  = [],[],[]
+                last_date = None
+                step = 10
+                while active_pos_x <= max_x   :
+                    
+                    label = self.driver.find_element_by_class_name("highcharts-label")
+                    texte = label.find_element_by_tag_name("text")
+                    texte = texte.find_elements_by_tag_name("tspan")
+                    #print(texte[0].text.split(' '))
+                    prediction_type, date = texte[0].text.split(' ')
+                    if date == last_date :
+                        pass
+                    else :     
+                        info_price = texte[1].text.split(' ')
+                        unit = info_price[1]
+                        price = float(info_price[0])
+                        last_date = date
+                        data_list_append(prices, price, dates, date, prediction_types, prediction_type)
+                    active_pos_x = active_pos_x + step
+                    webdriver.ActionChains(self.driver).move_by_offset(step,0).perform()
+                table = pd.DataFrame({'Trading Day': dates,'Prediction Type': prediction_types,'Price' : prices}) 
+                yield unit, active, table
+            else:
+                print('not now')
+        self.driver.quit()
 
-
-    chart_container = driver.find_elements_by_class_name('highcharts-graph')[0]
-
-    # width  = chart_container.value_of_css_property("width")
-    # height= chart_container.value_of_css_property("height")
-    # print(width,height)
-    # Determine coordinate of the middle of the box
-    pos_rel_middle_x = width/2 + pos_data_init[0]
-    pos_rel_middle_y = height/2 + pos_data_init[1]
-    #Calculate the offset of the mouse move to touch the last point 
-    offset_x = pos_data_of_the_day[0]-pos_rel_middle_x
-    offset_y = pos_data_of_the_day[1]-pos_rel_middle_y
-
-    webdriver.ActionChains(driver).move_to_element(chart_container).perform()
-    webdriver.ActionChains(driver).move_by_offset(offset_x,offset_y).perform()
-
-
-    label = driver.find_element_by_class_name("highcharts-label")
-    texte = label.find_element_by_tag_name("text")
-    prix = texte.find_elements_by_tag_name("tspan")[1]
-    prix = prix.text.split(' ')
-    unit = prix[1]
-    prix = float(prix[0])
-    driver.quit()
-    # time.sleep(6) # Let the user actually see something!
-
-    return (yesterday, prix, unit)
-    
-    
-
+ 
+def main():
+    browser = Browser()
+    for i in browser.scraper_iterator():
+        print(i)
+if __name__ == '__main__':
+    sys.exit(main())
