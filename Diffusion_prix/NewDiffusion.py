@@ -67,14 +67,14 @@ class DiffusionSpot:
         df.dropna(inplace = True) #In case there are missing values
         return df
 
-    def volatility(self, start_date:str, end_date:str, summer=False, winter=False, annualized=False):
+    def volatility(self, start_date:str, end_date:str, summer=False, winter=False, annualized=False, spot=True):
         '''
         This function returns the volatilty of a certain range of spot prices over the given dataframe.
         Optional parameter allow the user to select only summer or winter months for the volatility.
         The volatility is calculated taking the standard deviation from the series of log of the spot prices.
         Divide by len(m)-1 to produce an unbiased estimator.
         '''
-        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter)
+        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter, spot = spot)
         price = np.array(df['Price'])
         if len(price)!=0:
             series = np.array([np.log(price[i]/price[i-1]) for i in range(1, len(price))])
@@ -85,9 +85,9 @@ class DiffusionSpot:
                 if self.weekends:
                     return np.sqrt(variance/365)
                 else:
-                    return np.sqrt(variance/252) #252 trading days if weekends not included
+                    return np.sqrt(variance) #252 trading days if weekends not included
             else:
-                return np.sqrt(variance)
+                return np.sqrt(variance)*252**0.5
         else:
             return 0
 
@@ -106,12 +106,14 @@ class DiffusionSpot:
         plt.scatter(price[1:], price[:-1], color = 'b', marker = 'x')
         plt.legend('G_{t+1} = Y against G{t] = X')
         plt.show()
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y )
+        return slope, intercept, r_value, p_value, std_err 
 
-    def mean_reversion(self, start_date:str, end_date:str, summer=False, winter=False):
+    def mean_reversion(self, start_date:str, end_date:str, summer=False, winter=False, spot=True):
         '''
         Calculate the mean reversion parameter in the pilipovic process on a given dataframe.
         '''
-        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter)
+        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter, spot = spot)
         price = np.array(df['Price'])
         if len(price)!=0:
             Y = np.array([price[i] - price[i-1] for i in range(1, len(price))])
@@ -183,20 +185,40 @@ class DiffusionSpot:
         if self.forward_diffusion:
             self.forward_curve = self.fetch_forward(end_date)  #needs to be accessed by multiple functions
         else: #to avoid expensive computation if not necessary
-            mean = np.mean(np.array(self.selecting_dataframe(start_date_long, end_date_long)['Price']))
+            mean_sum = np.mean(np.array(self.selecting_dataframe(start_date_long, end_date_long, summer=True)['Price']))
+            mean_win = np.mean(np.array(self.selecting_dataframe(start_date_long, end_date_long, winter=True)['Price']))
             self.long_term_vol = self.volatility(start_date_long, end_date_long, annualized=True)
             Brownian_motion = np.cumsum(np.random.randn(n))
-            means = mean + self.long_term_vol*Brownian_motion
+            means_sum = mean_sum + self.long_term_vol*Brownian_motion
+            means_win = mean_win + self.long_term_vol*Brownian_motion
+            means = np.array([means_sum[i] if (dates[i].month in self.summer_months) else means_win[i] for i in range(n)])
         df = self.selecting_dataframe(end_date, end_date) #for start price of diffusion model
         start_price = float(df['Price'])
         self.dates = dates
         return volatilities, mean_reversions, means, n, start_price
 
+    def pilipovic_diffusion_forward_parameters(self, start_date_long:str, end_date_long:str, start_date:str, end_date:str, end_date_sim:str):
+        '''
+        Parameters for pilipovic diffusion around variable forward prices.
+        Other function than fixed_parameters is created for legibility. 
+        '''
+        df = self.selecting_dataframe(start_date_long, end_date_long, spot=False)
+        spot_volatilities, spot_mean_reversions, means, n, start_price = self.pilipovic_fixed_parameters(start_date_long, end_date_long, start_date, end_date, end_date_sim)
+        vol_sum_forward = self.volatility(start_date, end_date, summer = True, spot = False)
+        vol_win_forward = self.volatility(start_date, end_date, winter = True, spot = False)
+        m_r_sum_fwd = self.mean_reversion(start_date, end_date, summer = True, spot = False)
+        m_r_win_fwd = self.mean_reversion(start_date, end_date, winter = True, spot = False)
+        dates = self.daterange(end_date, end_date_sim)
+        fwd_volatilities =  np.array([vol_sum_forward if (dates[i].month in self.summer_months) else vol_win_forward for i in range(n)])
+        fwd_mean_rev = np.array([m_r_sum_fwd if (dates[i].month in self.summer_months) else m_r_win_fwd for i in range(n)])
+        mean_fwd = np.mean(np.array(df['Month+1']))
+
+
     def pilipovic_fixed_forward(self, volatilities, mean_reversions, means, n, start_price):
         '''
         Numerically solves stochastic differential equation of the pilipovic process.
         Here is considered standard brownian motion at each time step. The considered time
-        step is a day. The model is run between end_date and end_date_sim. 
+        step is a day. The model is run on n time steps of a day each.
         The function takes into account switches between summer and winter in considered time period.
         Return forward - Boolean to indicate if return of forward curve is needed. 
         If construction parameter forward_diffusion is False, then diffusion is around one scenario of long term mean
@@ -216,6 +238,18 @@ class DiffusionSpot:
                  G_k1 = mean_reversions[i]*(means[i] - G_k) + volatilities[i]*Brownian_motion[i] + G_k 
                  Spot_curve.append(G_k1)
         return Spot_curve
+
+    def pilipovic_variable_forward(self, spot_volatilities, spot_mean_reversions, forwards, n, start_price):
+        '''
+        Numerically solves stochastic differential equation of the pilipovic process.
+        Standard brownian motion, diffusion around variable forward prices.
+        Forward price varies at each time step according to a forward_diffusion parameter.
+        n is the number of time steps.
+        This function is the scenario on ONE given forward evolution scenario. 
+        '''
+        Spot_curve = [start_price]
+        Brownian_motion = np.random.randn(n)
+
 
     def multiple_price_scenarios(self, start_date_long:str, end_date_long:str, start_date:str, end_date:str, end_date_sim:str, n:int):
         '''

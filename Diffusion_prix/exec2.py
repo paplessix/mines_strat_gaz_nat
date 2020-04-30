@@ -27,7 +27,7 @@ end_date_long = '2013-09-10'
 start_date = '2013-02-13'
 end_date = '2013-09-10'
 end_date_sim = '2013-12-10'
-tab, moyenne, long_term_means, n = diff.multiple_price_scenarios(start_date_long, end_date_long, start_date, end_date, end_date_sim, 20)
+tab, moyenne, long_term_means, n = diff.multiple_price_scenarios(start_date_long, end_date_long, start_date, end_date, end_date_sim, 100)
 diff.show_multiple(tab, moyenne, long_term_means, n)
 
 #Let's examine all our parameters
