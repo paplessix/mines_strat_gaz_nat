@@ -1,0 +1,8 @@
+Making the fixed forward method better:
+- Take a better process for estimating the rate of return in the pilipovic process
+See estimating paramters from U-O model for more detail. Jack knife doesn't help...
+
+- Changing the diffusion model itself to include different parameters
+
+Creating the varying forward curve method:
+
