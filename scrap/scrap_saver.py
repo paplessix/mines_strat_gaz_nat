@@ -69,7 +69,7 @@ def main():
     parser.add_argument("-s","--specific", help = "Specific market desired")
     args = parser.parse_args()
     if not args.directory :
-        directory  = './Web_Scraping/last_save'
+        directory  = './scrap/last_save'
     else : 
         directory = args.directory
     
@@ -78,8 +78,8 @@ def main():
     elif args.product == 'forward':
         data_updater(directory,'forward',args.specific)
     else : 
-        data_updater('./Web_Scraping/last_save','forward',args.specific)
-        data_updater('./Web_Scraping/last_save','spot', args. specific)
+        data_updater('./scrap/last_save','forward',args.specific)
+        data_updater('./scrap/last_save','spot', args. specific)
 
 if __name__ == '__main__':
     sys.exit(main())

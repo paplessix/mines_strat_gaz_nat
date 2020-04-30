@@ -19,8 +19,8 @@ class Scenario_builder():
         tree = pd.read_csv(file, delimiter = ';', decimal = ',', header = 0)
         self.tree = np.array(tree)
         self.tree_prob  = np.ones(self.n_scen)/self.n_scen
-        plt.plot(self.tree, color = 'b')
-        plt.show()
+        # plt.plot(self.tree, color = 'b')
+        # plt.show()
 
     def distance_scen_pair(self, i, j,t_max):
         return sum(abs(self.tree.transpose()[i][:t_max]-self.tree.transpose()[j][:t_max]))
@@ -154,10 +154,10 @@ class Scenario_builder():
 
 
 
-builder = Scenario_builder()
-plt.show()
-builder.data_loader('test.csv')
-builder.scenario_tree_construction(7)
+# builder = Scenario_builder()
+# plt.show()
+# builder.data_loader('test.csv')
+# builder.scenario_tree_construction(7)
 
 
-builder.plot_tree()
+# builder.plot_tree()
