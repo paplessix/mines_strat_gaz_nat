@@ -36,7 +36,6 @@ class Stockage():
 
     def plot_volume(self):
         plt.plot(self.dates,self.volume_vect())
-        plt.show()
     
     def sout_corrige(self,X):
         Y_1 = self.Y_1
@@ -96,9 +95,9 @@ class Stockage():
                 else:
                     pass
 
-                if datetime.datetime(begin_year+1,int(month)+1,1) < end :
+                if datetime.datetime(begin_year+1,int(month),1) < end :
                     index_number = []
-                    current_search_day = datetime.datetime(begin_year+1,int(month)+1,1)
+                    current_search_day = datetime.datetime(begin_year+1,int(month),1)
                     while len(index_number) == 0 : 
                         index_number =self.data[self.data['Day'] == current_search_day].index.values.astype(int)
                         current_search_day = current_search_day - datetime.timedelta(days = 1)
