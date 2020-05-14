@@ -43,31 +43,25 @@ class Stockage():
         plt.plot(self.dates,self.volume_vect())
     
     def sout_corrige(self,X):
-        Y_1 = self.Y_1
-        Y_0 = self.Y_0
-        Y_2 = self.Y_2
+        sout_list = self.sout_list 
         V = np.dot(self.m.triang_inf,X) + self.Vinit*np.ones(self.N)
         def sout_correction( v ):
             stock_level = v/self.Vmax
-            if stock_level <Y_1[0]: # A rendre +modualire
-                return self.D_nom_sout/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
-            else : 
-                return self.D_nom_sout/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+            for i in range(1,len(sout_list)): 
+                if stock_level <sout_list[i][0]: # A rendre +modualire
+                    return self.D_nom_sout/(sout_list[i-1][1] + (sout_list[i][1]-sout_list[i-1][1])/(sout_list[i][0]-sout_list[i-1][0])*stock_level)
         sout_correction  = np.vectorize(sout_correction)
         return -self.Vmax/sout_correction(V)
 
     def inj_corrige(self,X):
-        Y_0 = self. X_0
-        Y_1 = self.X_1
-        Y_2 = self.X_2    
-
+        inj_list = self.inj_list  
         V = np.dot(self.m.triang_inf,X) + self.Vinit*np.ones(self.N)
+
         def inj_correction(v):
             stock_level = v/self.Vmax
-            if stock_level < Y_1[0]:# A Rendre + modulaire
-                return self.D_nom_inj/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
-            else : 
-                return self.D_nom_inj/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+            for i in range(1,len(sout_list)):
+                if stock_level < inj_list[i][0]:# A Rendre + modulaire
+                    return self.D_nom_inj/(inj_list[i-1][1] + (inj_list[i][1]-inj_list[i-1][1])/(inj_list[i][0]-inj_list[i-1][0])*stock_level)
         inj_correction = np.vectorize(inj_correction)
         return self.Vmax/inj_correction(V)
     
@@ -155,39 +149,93 @@ class Sediane_Nord_20 (Stockage):
         
         # Capacités de soutirage
         self.D_nom_sout = 44
-        self.Y_0 = [0,0.4]
-        self.Y_1 = [0.17, 0.65]
-        self.Y_2 = [1,1]
-
+        Y_0 = [0,0.4]
+        Y_1 = [0.17, 0.65]
+        Y_2 = [1,1]
+        self.sout_list = [Y_0,Y_1,Y_2]
         # Capacités d'injection
         self.D_nom_inj  = 85 
-        self.X_0 = [0,1]
-        self.X_1 = [0.6, 1]
-        self.X_2 = [1,0.43]
-
+        X_0 = [0,1]
+        X_1 = [0.6, 1]
+        X_2 = [1,0.43]
+        self.inj_list = [X_0,X_1,X_2]
 
         self.months_con = {'04' : [0,0.4],'06' :[0.2,0.65],
                             '08': [0.5,0.9],'09' : [0,0.95],
                             '11':[0.85,1]}
 
 class Saline_20 (Stockage):
-    # Pas à jour
     def __init__(self,Vmax,Vinit, dates, evolution):
         Stockage.__init__(self, Vmax, Vinit,dates, evolution)
         self.type = 'Saline_20'
 
         # Capacités de soutirage
         self.D_nom_sout = 17
-        self.Y_0 = [0,0.4]
-        self.Y_1 = [0.17, 0.65]
-        self.Y_2 = [1,1]
-
+        Y_0 = [0, 0.1]
+        Y_1 = [0.15, 0.7]
+        Y_2 = [0.45, 1]
+        Y_3 = [1, 1]
+        self.sout_list = [ Y_0,Y_1,Y_2,Y_3]
         # Capacités d'injection
-        self.D_nom_inj  = 85 
-        self.X_0 = [0,1]
-        self.X_1 = [0.6, 1]
-        self.X_2 = [1,0.43]
-        
+        self.D_nom_inj  = 125
+        X_0 = [0, 1]
+        X_1 = [0.45, 0.8]
+        X_2 = [0.9, 0.55]
+        X_3 = [1, 0.25]
+        self.inj_list = [X_0, X_1, X_2, X_3]
         # Threshold
         self.months_con = {'11':[0.85,1]}
+
+
+
+class Serene_Atlantique_20 ( Stockage) :
+    def __init__(self,Vmax,Vinit, dates, evolution):
+        Stockage.__init__(self, Vmax, Vinit,dates, evolution)
+        self.type = 'Serene Atlantique 20 '
+
+        # Capacités de soutirage
+        self.D_nom_sout = 80
+        Y_0 = [0, 0.2]
+        Y_1 = [0.15, 0.42]
+        Y_2 = [0.55, 0.75]
+        Y_3 = [0.8, 0.9]
+        Y_4 = [1,1]
+        self.sout_list = [ Y_0,Y_1,Y_2,Y_3, Y_4]
+        # Capacités d'injection
+        self.D_nom_inj  = 135
+        X_0 = [0, 1]
+        X_1 = [0.3, 1]
+        X_2 = [0.65, 0.85]
+        X_3 = [0.75, 0.8]
+        X_4 = [1, 0.78]
+        self.inj_list = [X_0, X_1, X_2, X_3, X_4]
+        # Threshold
+        self.months_con = {'04':[0,0.4], '08':[0,0.9], '09':[0,0.95], '11':[0.9,1]}
+
+
+class Serene_Nord_20 ( Stockage) :
+    def __init__(self,Vmax,Vinit, dates, evolution):
+        Stockage.__init__(self, Vmax, Vinit,dates, evolution)
+        self.type = 'Serene Nord 20 '
+
+        # Capacités de soutirage
+        self.D_nom_sout = 85
+        Y_0 = [0, 0.25]
+        Y_1 = [0.1, 0.3]
+        Y_2 = [0.35, 0.6]
+        Y_3 = [0.7, 0.85]
+        Y_4 = [1,1]
+        self.sout_list = [ Y_0,Y_1,Y_2,Y_3, Y_4]
+        # Capacités d'injection
+        self.D_nom_inj  = 135
+        X_0 = [0, 1]
+        X_1 = [0.3, 1]
+        X_2 = [0.65, 0.85]
+        X_3 = [0.75, 0.8]
+        X_4 = [1, 0.78]
+        self.inj_list = [X_0, X_1, X_2, X_3, X_4]
+        # Threshold
+        self.months_con = {'04':[0,0.4], '08':[0,0.9], '09':[0,0.95], '11':[0.9,1]}
+        
+
 
