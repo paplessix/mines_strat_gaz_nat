@@ -26,7 +26,7 @@ class Scenario_builder():
 
     def data_loader_df(self,df):
         tree_with_head = np.array(df)
-        tree = tree_with_head[1:30,:2]
+        tree = tree_with_head[1:,:-1]
         self.tree = tree
         self.tree_prob  = np.ones(self.n_scen)/self.n_scen
         plt.plot(self.tree, color = 'b')

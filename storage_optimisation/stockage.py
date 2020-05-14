@@ -18,7 +18,12 @@ class Stockage():
         self.Y_0 = [0,0.4]
         self.Y_1 = [0.17, 0.65]
         self.Y_2 = [1,1]
-        self.D_nom = 44
+            # Capacités d'injection 
+        self.X_0 = [0,1]
+        self.X_1 = [0.6, 1]
+        self.X_2 = [1,0.43]
+        self.D_nom_sout = 44
+        self.D_nom_inj  = 85
         self.months_con = {'04' : [0,0.4],'06' :[0.2,0.65],
                                     '08': [0.5,0.9],'09' : [0,0.95],
                                     '11':[0.85,1]}
@@ -45,23 +50,24 @@ class Stockage():
         def sout_correction( v ):
             stock_level = v/self.Vmax
             if stock_level <Y_1[0]: # A rendre +modualire
-                return self.D_nom/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
+                return self.D_nom_sout/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
             else : 
-                return self.D_nom/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+                return self.D_nom_sout/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
         sout_correction  = np.vectorize(sout_correction)
         return -self.Vmax/sout_correction(V)
 
     def inj_corrige(self,X):
-        Y_0 = [0,1]
-        Y_1 = [0.6, 1]
-        Y_2 = [1,0.43]
+        Y_0 = self. X_0
+        Y_1 = self.X_1
+        Y_2 = self.X_2    
+
         V = np.dot(self.m.triang_inf,X) + self.Vinit*np.ones(self.N)
         def inj_correction(v):
             stock_level = v/self.Vmax
             if stock_level < Y_1[0]:# A Rendre + modulaire
-                return self.D_nom/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
+                return self.D_nom_inj/(Y_0[1] + (Y_1[1]-Y_0[1])/(Y_1[0]-Y_0[0])*stock_level)
             else : 
-                return self.D_nom/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
+                return self.D_nom_inj/(Y_1[1] + (Y_2[1]-Y_1[1])/(Y_2[0]-Y_1[0])*(stock_level-Y_1[0]))
         inj_correction = np.vectorize(inj_correction)
         return self.Vmax/inj_correction(V)
     
@@ -146,11 +152,42 @@ class Sediane_Nord_20 (Stockage):
     def __init__(self,Vmax,Vinit, dates, evolution):
         Stockage.__init__(self, Vmax, Vinit,dates, evolution)
         self.type = 'Sediane_Nord_20'
+        
+        # Capacités de soutirage
+        self.D_nom_sout = 44
         self.Y_0 = [0,0.4]
         self.Y_1 = [0.17, 0.65]
         self.Y_2 = [1,1]
-        self.D_nom = 44
+
+        # Capacités d'injection
+        self.D_nom_inj  = 85 
+        self.X_0 = [0,1]
+        self.X_1 = [0.6, 1]
+        self.X_2 = [1,0.43]
+
+
         self.months_con = {'04' : [0,0.4],'06' :[0.2,0.65],
                             '08': [0.5,0.9],'09' : [0,0.95],
                             '11':[0.85,1]}
+
+class Saline_20 (Stockage):
+    # Pas à jour
+    def __init__(self,Vmax,Vinit, dates, evolution):
+        Stockage.__init__(self, Vmax, Vinit,dates, evolution)
+        self.type = 'Saline_20'
+
+        # Capacités de soutirage
+        self.D_nom_sout = 17
+        self.Y_0 = [0,0.4]
+        self.Y_1 = [0.17, 0.65]
+        self.Y_2 = [1,1]
+
+        # Capacités d'injection
+        self.D_nom_inj  = 85 
+        self.X_0 = [0,1]
+        self.X_1 = [0.6, 1]
+        self.X_2 = [1,0.43]
+        
+        # Threshold
+        self.months_con = {'11':[0.85,1]}
 
