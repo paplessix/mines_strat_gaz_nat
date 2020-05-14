@@ -11,11 +11,11 @@ class Simulation :
     def data_loader_csv(self, path):
         df = pd.read_csv(path, header = 0, index_col = 0)
         df  =df .transpose()
-        self.data = df.iloc[0:30]
+        self.data = df.iloc[:120]
         self.data.index = pd.to_datetime(self.data.index)
         self.columns = self.data.columns
-    
-    X_0 = property(lambda self: np.zeros(len(self.data.index)))
+        self.X_0 = np.zeros(len(self.data.index))
+        
     def simulation_plot(self, mean  = False, Boxplot  = False):
         print(self.data.index)
         self.data.T.boxplot()
@@ -29,7 +29,7 @@ class Simulation :
         df_inter["Day"] = self.data.index
         print(df_inter)
         threshold_disp = False
-        for column in self.columns[ : -1]:
+        for column in self.columns[0 :10 ]:
             print('Optimizing:', column )
             df_inter["Price"] = self.data[column].values
             stock = Stockage(100, V_0, df_inter, self.X_0)
@@ -42,9 +42,12 @@ class Simulation :
                 stock.plot_threshold()
             
             stock.plot_volume()
-            self.profits.append(-profit(stock.evolution, df_inter["Price"]))
+            print('initial_invest', V_0*df_inter["Price"][0])
+            self.profits.append( -V_0*df_inter["Price"][0] -profit(stock.evolution, df_inter["Price"]))
             self.strategies.append(list(stock.volume_vect()))
-        plt.show()  
+            self.X_0 = stock.evolution
+        plt.show()
+        print(self.profits)  
     
     def value_at_risk(self, disp = True, verbose = True  ):
         try:
@@ -68,6 +71,6 @@ path_csv = Path(__file__).parent.parent / 'Data' / 'Diffusion_model.csv'
 simul.data_loader_csv(path_csv)
 print(simul.data)
 simul.simulation_plot()
-simul.optimizer(0)
+simul.optimizer(10)
 simul.value_at_risk()
     
