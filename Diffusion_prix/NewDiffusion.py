@@ -78,7 +78,7 @@ class DiffusionSpot:
         Output:
         Volatility as taken to be the standard deviation of the series of daily log changes of spot or forward price.
         '''
-        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter, spot = spot)
+        df = self.selecting_dataframe(start_date, end_date, True, summer = summer, winter = winter)
         price = np.array(df['Price'])
         if len(price)!=0:
             series = np.array([np.log(price[i]/price[i-1]) for i in range(1, len(price))])
@@ -261,30 +261,11 @@ class DiffusionSpot:
             mean = np.mean(np.array(self.selecting_dataframe(start_date_long, end_date_long, remove_weekends = remove_weekends)['Price']))
             self.long_term_vol = self.volatility(start_date_long, end_date_long, annualized=True, remove_weekends = remove_weekends)
             Brownian_motion = np.cumsum(np.random.randn(n))
-            means_sum = mean_sum + self.long_term_vol*Brownian_motion
-            means_win = mean_win + self.long_term_vol*Brownian_motion
-            means = np.array([means_sum[i] if (dates[i].month in self.summer_months) else means_win[i] for i in range(n)])
+            means = np.array([mean+self.long_term_vol*Brownian_motion[i] for i in range(n)])
         df = self.selecting_dataframe(end_date, end_date) #for start price of diffusion model
         start_price = float(df['Price'])
         self.dates = dates
         return volatilities, mean_reversions, means, n, start_price
-
-    def pilipovic_diffusion_forward_parameters(self, start_date_long:str, end_date_long:str, start_date:str, end_date:str, end_date_sim:str):
-        '''
-        Parameters for pilipovic diffusion around variable forward prices.
-        Other function than fixed_parameters is created for legibility. 
-        '''
-        df = self.selecting_dataframe(start_date_long, end_date_long, spot=False)
-        spot_volatilities, spot_mean_reversions, means, n, start_price = self.pilipovic_fixed_parameters(start_date_long, end_date_long, start_date, end_date, end_date_sim)
-        vol_sum_forward = self.volatility(start_date, end_date, summer = True, spot = False)
-        vol_win_forward = self.volatility(start_date, end_date, winter = True, spot = False)
-        m_r_sum_fwd = self.mean_reversion(start_date, end_date, summer = True, spot = False)
-        m_r_win_fwd = self.mean_reversion(start_date, end_date, winter = True, spot = False)
-        dates = self.daterange(end_date, end_date_sim)
-        fwd_volatilities =  np.array([vol_sum_forward if (dates[i].month in self.summer_months) else vol_win_forward for i in range(n)])
-        fwd_mean_rev = np.array([m_r_sum_fwd if (dates[i].month in self.summer_months) else m_r_win_fwd for i in range(n)])
-        mean_fwd = np.mean(np.array(df['Month+1']))
-
 
     def pilipovic_fixed_forward(self, volatilities, mean_reversions, means, n, start_price):
         '''
