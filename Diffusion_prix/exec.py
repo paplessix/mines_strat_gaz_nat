@@ -2,8 +2,8 @@ from NewDiffusion import DiffusionSpot
 import pandas as pd
 import numpy as np
 
-path1 = 'C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/data_save_02_04/spot_€_MWh_PEG.csv'
-path2 = 'C:/Users/spart/Documents/MinesParis/Info/ProjetInfo/data_save_02_04/forward_€_MWh_PEG.csv'
+path1 = 'C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/data_save_02_04/spot_€_MWh_PEG.csv'
+path2 = 'C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/data_save_02_04/forward_€_MWh_PEG.csv'
 
 #best to run from an anaconda prompt or terminal rather than from interactive console
 diff = DiffusionSpot(path1, path2)
@@ -19,7 +19,7 @@ columns = diff.daterange(end_date, end_date_sim)
 rows = [f'simulation n°{i}' for i in range(n)]
 rows.append('moyenne scenarios')
 df = pd.DataFrame(data=final_tab, columns = columns, index=rows)
-df.to_csv('Diffusion_model')
+df.to_csv('Diffusion_model_fixed_forward')
 # diff.illustrating_mean_reversion(start_date, end_date) #optional to illustrate mean reversion, we see the parameter is quite close to 0.
 
 
