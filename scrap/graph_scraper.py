@@ -90,7 +90,7 @@ class Browser :
                 
                 time.sleep(1)
                 webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# click on the button
-                webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# On double pou être sur que ça marche
+                webdriver.ActionChains(self.driver).double_click(GNL_type).perform()# On double clique pou être sur que ça marche
                 time.sleep(5)
 
                 active = self.bloc.find_element_by_class_name('active').text

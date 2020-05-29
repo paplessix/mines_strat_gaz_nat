@@ -11,7 +11,7 @@ class Simulation :
     def data_loader_csv(self, path):
         df = pd.read_csv(path, header = 0, index_col = 0)
         df  =df .transpose()
-        self.data = df.iloc[:]
+        self.data = df.iloc[150:200,:]
         self.data.index = pd.to_datetime(self.data.index)
         self.columns = self.data.columns
         self.X_0 = np.zeros(len(self.data.index))
@@ -29,10 +29,11 @@ class Simulation :
         df_inter["Day"] = self.data.index
         print(df_inter)
         threshold_disp = False
-        for column in self.columns[0 :80 ]:
+        for column in self.columns[:100]:
+            print('=================')
             print('Optimizing:', column )
             df_inter["Price"] = self.data[column].values
-            stock = Stockage(100, V_0, df_inter, self.X_0)
+            stock = Stockage(10000, V_0, df_inter, self.X_0)
             opti = Optimizer(stock) 
             opti.contraints_init()
             opti.optimize()
