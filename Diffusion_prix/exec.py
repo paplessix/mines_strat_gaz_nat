@@ -19,7 +19,7 @@ columns = diff.daterange(end_date, end_date_sim)
 rows = [f'simulation n°{i}' for i in range(n)]
 rows.append('moyenne scenarios')
 df = pd.DataFrame(data=final_tab, columns = columns, index=rows)
-df.to_csv('Diffusion_model')
+df.to_csv('Diffusion_model.csv')
 # diff.illustrating_mean_reversion(start_date, end_date) #optional to illustrate mean reversion, we see the parameter is quite close to 0.
 
 

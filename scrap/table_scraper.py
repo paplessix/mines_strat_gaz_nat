@@ -1,121 +1,170 @@
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-import pandas as pd
+"""
+Module that scraps data from forward prices on powernext
+"""
 import sys
 import time
 
-class Browser : 
+import pandas as pd
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+
+
+class Browser:
+    """ Class that launchs Powernext in chrome and that scrap the spot data from dynamic graph
+    """
+
     def __init__(self):
         self.delay = 10
+        self.gnl_types_month = None
+        self.gnl_types_season = None
+        self.bloc_month = None
+        self.bloc_season = None
+        self.driver = None
 
-    def chrome_launcher(self,link):
+    def chrome_launcher(self, link: str):
+        """Function that launch a chrome browser
+        Parameter:
+            - The url
+        """
         # Create a new instance of Chrome
         option = webdriver.ChromeOptions()
         option.add_argument("— incognito")
         print(link)
-        self.driver = webdriver.Chrome('./chromedriver.exe')  # Optional argument, if not specified will search path.
+        # Optional argument, if not specified will search path.
+        self.driver = webdriver.Chrome('./chromedriver.exe')
         self.driver.get(link)
-    
-    def wait_is_loaded(self, bloc,path_direction, type_of_path):
-        path = {"css_selector" : By.CSS_SELECTOR, "class_name" : By.CLASS_NAME} 
-        try:
-            WebDriverWait(bloc, self.delay).until(EC.visibility_of_element_located((path[type_of_path],path_direction)))
-        except TimeoutException:
-            print( 'data_exception')
-    
-    def GNL_finder(self):
-            blocs  = self.driver.find_elements_by_css_selector("div.standard-page-block.standard-page-body")
-            self.bloc_month = blocs[-4]
-            self.bloc_season = blocs[-3] # TO DO : Implement  a fonction to distinguish wich div are relevant to scrap
-            self.GNL_types_month= self.bloc_month.find_elements_by_tag_name ("li") # Find all possible GNL types
-            self.GNL_types_season= self.bloc_season.find_elements_by_tag_name ("li") # Find all possible GNL types
-            self.GNL_types_text = [tile.text for tile in self.GNL_types_month]
-            print(self.GNL_types_text)
 
+    def gnl_finder(self):
+        """
+        Find a list of all GNL market types present on the website,
+        they're represented by the corresponding WebElement.
+        And add it as an attribute to the class
+        parameters :
+            - self
+
+        Return :
+            - None
+        Exemple : [PEG, ZEE, ETH, ...]
+        """
+        blocs = self.driver.find_elements_by_css_selector(
+            "div.standard-page-block.standard-page-body")
+        self.bloc_month = blocs[-4] # Depending on the DOM architecture
+        self.bloc_season = blocs[-3] #Dependinf on the DOM architecture
+        self.gnl_types_month = self.bloc_month.find_elements_by_tag_name(
+            "li")  # Find all possible gnl types
+        self.gnl_types_season = self.bloc_season.find_elements_by_tag_name(
+            "li")  # Find all possible gnl types
     def table_scraper(self):
+        """ Function that extract the data and all the relevant informations
+        from the html code of a loaded page
+        Return :
+            - table_month
+            - table_season
+            - no_month
+            - no_season
+            - active_month
+        """
         no_month, no_season = False, False
-        table_month, table_season,table = None, None, None
-        #find_title and infos        
-        info = self.bloc_month.find_element_by_class_name('data-table-title').text
-        active_month = self.bloc_month.find_element_by_class_name('active').text
-        active_season = self.bloc_season.find_element_by_class_name('active').text
-        
-        
-        if active_month != active_season :
-            raise TypeError
+        table_month, table_season = None, None
+        #find_title and infos
+        info = self.bloc_month.find_element_by_class_name(
+            'data-table-title').text
+        active_month = self.bloc_month.find_element_by_class_name(
+            'active').text
+        active_season = self.bloc_season.find_element_by_class_name(
+            'active').text
 
+        if active_month != active_season:
+            raise TypeError
 
         # find table div
         try:
-            div_month = self.bloc_month.find_element_by_class_name('table-responsive')
+            div_month = self.bloc_month.find_element_by_class_name(
+                'table-responsive')
 
         except NoSuchElementException:
             no_month = True
         else:
             # find html
-            html_month  = div_month.get_attribute('innerHTML')
-            table_month=pd.read_html(str(html_month))[0] # convert to DataFrame
-        
+            html_month = div_month.get_attribute('innerHTML')
+            table_month = pd.read_html(str(html_month))[
+                0]  # convert to DataFrame
+
         try:
-            div_season = self.bloc_season.find_element_by_class_name('table-responsive')
+            div_season = self.bloc_season.find_element_by_class_name(
+                'table-responsive')
         except NoSuchElementException:
             no_season = True
-            
+
         else:
             # find html
-            html_season  = div_season.get_attribute('innerHTML')
-            table_season=pd.read_html(str(html_season))[0] # convert to DataFrame    
+            html_season = div_season.get_attribute('innerHTML')
+            table_season = pd.read_html(str(html_season))[
+                0]  # convert to DataFrame
 
         return table_month, table_season, no_month, no_season, info, active_month
 
-
-    def scraper_iterator(self,specific_type = False, link = 'https://www.powernext.com/futures-market-data' ):
+    def scraper_iterator(self, specific_type=False,
+                         link='https://www.powernext.com/futures-market-data'):
         """
-        Function that returns an iterator on the table of forward prices of different GNL Types
+        Function that returns an iterator on the table of forward prices of different
+        gnl market Types
         Input :
             - URL : str
-        Output
+            - specific_type : the type of gnl market to consider, default --> all
+            - link : tje url website where to find the data ,
+            please be careful to find a website with a similar DOM
+        Output :
+            - info
+            - active
+            - table
         """
         self.chrome_launcher(link)
-        self.GNL_finder()
-        print(self.GNL_types_season)
-        for type_month, type_season in zip( self.GNL_types_month, self.GNL_types_season) : # iterate on this types
-            
-            if  (not specific_type)  or (type_season.text in specific_type):        
-                # Change GNL types 
-                webdriver.ActionChains(self.driver).double_click(type_season).perform()
+        self.gnl_finder()
+        # iterate on the gnl market types
+        for type_month, type_season in zip(self.gnl_types_month, self.gnl_types_season):
+
+            if (not specific_type) or (type_season.text in specific_type):
+                # Change gnl types
+                webdriver.ActionChains(self.driver).double_click(
+                    type_season).perform()
                 time.sleep(1)
-                webdriver.ActionChains(self.driver).double_click(type_month).perform()# click on the button
+                webdriver.ActionChains(self.driver).double_click(
+                    type_month).perform()  # click on the button
                 time.sleep(1)
-                webdriver.ActionChains(self.driver).double_click(type_season).perform()# chelou ça amrche sur mon ordi
-                #Wait for everything to be loaded 
-                time.sleep(3) # Best Way to ensure that the table is perfectly loaded for now
-                
+                webdriver.ActionChains(self.driver).double_click(
+                    type_season).perform()  # Click a second time to be sure it works
+                # Wait for everything to be loaded
+                # Best Way to ensure that the table is perfectly loaded for now
+                time.sleep(3)
+
                 table_month, table_season, no_month, no_season, info, active = self.table_scraper()
-                
-                if no_month :
+
+                if no_month:
                     table = table_season
                     print('no_month')
-                elif  no_season :
+                elif no_season:
                     table = table_month
                     print('no_season')
-                else :
+                else:
                     table = pd.merge(table_month, table_season)
                     print("merge")
                 yield info, active, table
             else:
-                print('not now')
+                print('not now') #if the currently active gnl_market doesn't need to be scrapped
+                # we do nothing
 
         self.driver.quit()
 
+
 def main():
+    """
+    go through iterator default mode
+    """
     browser = Browser()
     for i in browser.scraper_iterator(specific_type="GPL"):
         print(i)
 
+
 if __name__ == '__main__':
     sys.exit(main())
-
