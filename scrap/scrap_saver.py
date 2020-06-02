@@ -15,6 +15,9 @@ from scrap.table_scraper import Browser as Browser_forward
 
 def filename_constructor(directory, info, active, price_type):
     """ Function that construct the path to the file depending on the GNL type
+    Return:
+        - a string corresponding to the normalized filename, hadling the specificities
+        of the set of data.
     """
     active = active.replace(' ', '_') # Create a more database-friendly name
     unit = info.split(' ')[-1].replace('/', '_') # Get rid of / and second date of the WE
@@ -23,9 +26,13 @@ def filename_constructor(directory, info, active, price_type):
     return filename
 
 
-def list_csv_dir(directory):
+def list_csv_dir(directory : str):
     """
     Sparse all the csv files present in the active directory
+    Parameters :
+        - directory : str, the working directory
+    Return :
+        - a list of all the csv files in the directory
     """
     files = list(map(lambda x: directory + '/' + x,
                      filter(lambda x: x[-4:] == '.csv', os.listdir(directory))))
@@ -49,7 +56,16 @@ def data_initializer(directory, price_type, specific_type=False):
 
 def data_updater(directory, price_type, specific_type=False):
     """Read the daily data and add to the existing DB only the missing one
-        If the data do not exist, it will creat a table
+        If the data do not exist, it will create a table, create the files
+        at the directory variable location. Updates spot or forward prices,
+        and can update only a specific market_type. 
+        
+        Parameters :
+            - directory : str, the place where to write/search the files
+            - price_type : str, the price type needed to be updated (spot or forward)
+            - specific_type : str, the desired market type, ex [ PEG, ZEE, ETH]
+        Return : 
+            - None
     """
     functions = {"forward": Browser_forward, "spot": Browser_spot}
     browser = functions[price_type]()
