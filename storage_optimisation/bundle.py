@@ -1,9 +1,12 @@
-from optimizer import Optimizer, profit
-from stockage import Stockage
-import pandas as pd
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
+import pandas as pd
+
+from storage_optimisation.optimizer import Optimizer, profit
+from storage_optimisation.stockage import Stockage
+
 
 class Simulation : 
     def __init__ (self):
@@ -11,7 +14,7 @@ class Simulation :
     def data_loader_csv(self, path):
         df = pd.read_csv(path, header = 0, index_col = 0)
         df  =df .transpose()
-        self.data = df.iloc[150:200,:]
+        self.data = df.iloc[0:350,:]
         self.data.index = pd.to_datetime(self.data.index)
         self.columns = self.data.columns
         self.X_0 = np.zeros(len(self.data.index))
@@ -49,7 +52,7 @@ class Simulation :
             self.X_0 = stock.evolution
         plt.show()
     
-    def value_at_risk(self, disp = True, verbose = True  ):
+    def value_at_risk(self, disp = True, verbose = True ):
         try:
             profits = self.profits
             print('Nb simulations : ', len(profits))
@@ -80,4 +83,3 @@ print(simul.data)
 simul.simulation_plot()
 simul.optimizer(30)
 simul.value_at_risk()
-    

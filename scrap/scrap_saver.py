@@ -68,7 +68,11 @@ def data_updater(directory, price_type, specific_type=False):
             - None
     """
     functions = {"forward": Browser_forward, "spot": Browser_spot}
-    browser = functions[price_type]()
+    if price_type in functions.keys() :
+        browser = functions[price_type]()
+    else :
+        raise KeyError # use spot or forward
+
     list_csv = list_csv_dir(directory) # Get the current existing db
     print(list_csv)
     for info, active, table in browser.scraper_iterator(specific_type):

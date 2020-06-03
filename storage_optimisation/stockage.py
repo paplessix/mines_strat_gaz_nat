@@ -76,8 +76,7 @@ class Stockage():
     
     volume_end = property (volume_calc)
 
-    def plot_volume(self):
-        plt.plot(self.dates,self.volume_vect())
+
     
     def sout_correction(self, v : np.array ):
         """Function that computes the effective maximale racking of the storage 
@@ -192,7 +191,7 @@ class Stockage():
     vect_max = property (max_v)
     
     def tunnel_max(self):
-        L=np.zeros((self.N,len(self.threshold_con.keys()))) # Construire directement à la bonne taile 
+        L=np.zeros((len(self.threshold_con.keys()),self.N)) # Construire directement à la bonne taile 
         def chapiteau_max(i,dirac):
             serie = np.zeros(self.N)
             i_max = self.N-1
@@ -210,7 +209,7 @@ class Stockage():
         return np.array(L).min(axis =0) 
 
     def tunnel_min(self):
-        L=np.zeros((self.N,len(self.threshold_con.keys())))
+        L=np.zeros((len(self.threshold_con.keys()),self.N))
         def chapiteau_min(i,dirac):
             serie = np.zeros(self.N)
             i_max = self.N-1
@@ -232,7 +231,12 @@ class Stockage():
         # create the tunnel 
         self.lim_min =   self.tunnel_min()
         self.lim_max = self.tunnel_max()
-
+   
+    def plot_volume(self):
+        """function that plots the volume evolution
+        """
+        plt.plot(self.dates,self.volume_vect())
+    
     def plot_threshold(self):
         plt.plot(self.dates,self.vect_min)
         plt.plot(self.dates,self.vect_max)
@@ -337,9 +341,10 @@ class Serene_Atlantique_20 ( Stockage) :
 
 
 class Serene_Nord_20 ( Stockage) :
-"""
-Property of a Serene_Nord_20 storage
-"""
+    """
+    Property of a Serene_Nord_20 storage
+    """
+        
     def __init__(self,Vmax,Vinit, dates, evolution):
         Stockage.__init__(self, Vmax, Vinit,dates, evolution)
         self.type = 'Serene Nord 20 '
@@ -377,7 +382,7 @@ def main():
     
     x = np.linspace(1,99,1000)
     L= []
-    for i in x : 
+    for _ in x : 
         stock = Saline_20 (100,100, data, X_0)
         L.append(max(stock.sout_corrige(stock.evolution)*stock.D_nom_sout))
     plt.plot(x,L)
@@ -392,14 +397,14 @@ def main2():
 
     data =  pd.read_csv(path_spot)
 
-    data_select = data.iloc[50:500 ].copy()
+    data_select = data.iloc[50:500].copy()
     data_select.loc[:,'Day'] = pd.to_datetime(data_select['Day'], format = '%Y-%m-%d')
     X_0 = np.zeros( len(data_select['Day']))
     stock = Stockage (100,10, data_select, X_0)
     stock.tunnel()
     stock.plot_threshold()
+    stock.plot_tunnel()
     plt.show()
-
 
 if __name__ == "__main__":
     sys.exit(main2())

@@ -1,4 +1,4 @@
-from mines_strat_gaz_nat.storage_optimisation.tree_reducer import Scenario_builder
+from storage_optimisation.tree_reducer import Scenario_builder
 import numpy as np
 import pandas as pd
 from pathlib import Path
