@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+import networkx as nx
+
 # tree = pd.read_csv('test.csv', delimiter = ';', decimal = ',', header = 0)
 # tree = np.array(tree)
 
@@ -15,12 +17,21 @@ class Scenario_builder():
     def __init__(self):
         pass
     
-    def data_loader(self, file):
-        tree = pd.read_csv(file, delimiter = ';', decimal = ',', header = 0)
+    def data_loader_csv(self, file, header = 0):
+        tree = pd.read_csv(file, delimiter = ';', decimal = ',',header =  header)
         self.tree = np.array(tree)
         self.tree_prob  = np.ones(self.n_scen)/self.n_scen
         # plt.plot(self.tree, color = 'b')
         # plt.show()
+
+    def data_loader_df(self,df):
+        tree_with_head = np.array(df)
+        tree = tree_with_head[1:,:-1]
+        self.tree = tree
+        self.tree_prob  = np.ones(self.n_scen)/self.n_scen
+        plt.plot(self.tree, color = 'b')
+        plt.show()
+
 
     def distance_scen_pair(self, i, j,t_max):
         return sum(abs(self.tree.transpose()[i][:t_max]-self.tree.transpose()[j][:t_max]))
@@ -142,13 +153,31 @@ class Scenario_builder():
                     boundings[i] = boundings[i]+transfer_bound
                 else : 
                     boundings[i] = transfer_bound
-            plt.plot(self.tree)
-            plt.show()
+            # plt.plot(self.tree)
+            # plt.show()
             for i in range(2,self.n_scen):
                 pass
             index = index.difference(J)
             if len(index) <= 1 :
                 break
+
+    def nx_graph_builder(self):
+        G = nx.DiGraph()
+        n, m = self.tree.shape
+        G.add_node('root',price = self.tree[0,0], probability =1 )
+        for i in range (m):
+            last_node = 'root'
+            for j in range(1,n):
+                G.add_node(f'node{i}_{j}', price = self .tree [j,i], probability  = 1/self.n_scen )
+                G.add_edge(last_node,f'node{i}_{j}')
+                last_node = f'node{i}_{j}'
+        self.graph = G
+    
+    def plot_graph(self):
+        nx.draw_shell(self.graph)
+        plt.show()
+
+
 
 
 
