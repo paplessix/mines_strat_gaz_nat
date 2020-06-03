@@ -69,6 +69,45 @@ Tests mis en place :
 - 
 ## Partie 2 : Diffusion de Prix 
 -------------------
+Module Diffusion_prix qui a pour objectif de génerer des diffusions de prix spot (instantané) à partir des données récupérées dans le module 1, c'est à dire l'historique des prix spots et forwards sur différents marchés, notamment PEG (France).
+
+Le module fonctionne aussi avec des historiques de prix d'autres sources, avec un prétraitement préalable pour que les fichiers csv en entrée du module aient un format adapté.
+
+L'utilisation se fait au travers de la classe `DiffusionSpot` définie dans le script `NewDiffusion.py`. 
+Cette classe est dotée de nombreuses fonctions facilitant l'utilisation des données, l'utilisation des dates et les fonctions permettant la diffusion de prix spot. Le détail de chaque fonction se trouve dans la documentation de la classe, accessible via l'attribut `__doc__` pour chacune de ces fonctions. On détaillera brièvement certaines d'entre elles lors de l'explication des scripts d'exécution.
+
+Il y a aussi quatres scripts `exec.py`, `exec2.py`, `exec3.py` et `execRF.py` qui illustrent la bonne utilisation de la classe DiffusionSpot dans quatres scénarios différents et avec un prétraitement lorsque nécessaire.
+
+- `exec.py`: path 1 et path 2 correspondent aux paths locaux des fichiers spots et forward récupérés avec le module 1. Ce script implémente une diffusion autour d'une courbe de forward issue à la date de début de la simulation. Ainsi, au premier jour de la simulation on prend les forwards donnés pour les quatres mois à venir et on effectue une diffusion du prix spot autour de ces forwards fixes. 
+  >On considère implicitement que le prix spot du gaz naturel devrait converger vers le prix forward issu précédemment. Si l'on note $S(t)$ le prix spot à un moment $t$ et $F(t, T)$ le prix forward donné à l'instant $t$ pour un contrant maturant à $T$. Ceci revient à dire que $S(t) \rightarrow_{t \rightarrow T} F(t, T)$. C'est discutable et on essaiera de se passer de cette hypothèse par la suite.
+  - Le script nécessite de définir 5 dates. start_date_long et end_date_long définissent la période sur laquelle on estime les paramètres à long terme. Ici ils ne sont pas définis car pas nécessaires, on estime seulement la volatilité été/hiver (le marché du gaz naturel exhibant de fortes caractéristiques saisonnières) sur une période courte, définie par start_date et end_date. 
+  - La diffusion est effectuée entre end_date et end_date_sim. **En sortie** : Deux graphiques, un avec les diffusions spot l'autre avec la moyenne de ces diffusions comparée avec les forwards pour vérifier que la diffusion se fait bien autour de ces derniers. Un csv avec les 100 diffusions spots et la moyenne des scénarios. On utilise les fonctions `multiple_price_scenarios` et `show_multiple`.
+
+- `exec2.py`: On utilise ici uniquement un historique de prix spot et pas de forward (avec un peu de formattage préalable). L'historique utilisé est Power_next_spot, placé dans le répertoire Diffusion_prix également. L'idée est de faire une diffusion de prix autour d'une moyenne à long terme qui elle même change à chaque pas en fonction de la volatilité long terme observée sur les données historiques. 
+  - On défini 5 dates, les dates pour les paramètres à estimer sur le long terme, le court terme et puis la date de la fin de simulation (le début étant pris comme la dernière date utilisée pour l'estimation des paramètres court terme).
+  - en créant notre objet diff on fait bien attention à préciser forward_diffusion=False pour spécifier notre intention de faire une diffusion autour d'une moyenne long terme et non pas d'un forward diffusant ou pas.
+  - number_of_diffusion correspond au nombre de scénarios voulus
+  - On affiche trois graphiques. Le premier est celui des diffusions. Le deuxième illustre la moyenne long terme qui varie à cause de la volatilité long terme. On y affiche aussi la moyenne des scenarios de diffusion pour vérifier que ceux-ci se rapprochent bien de cette moyenne long terme. Le troisième compare l'évolution réellement observée du prix spot avec un des scénari.
+  - On écrit aussi un csv contenant toutes ces diffusions `Diffusion_model_fixed_forward` qui ont été effectuées à l'aide de `multiple_price_scenarios`
+
+- `exec3.py`: On revient vers les données obtenues grâce au module 1. Au lieu de faire une diffusion autour d'un forward fixe pris sur le premier jour de la simulation on va faire une diffusion de prix forwards. La courbe des forwards considérés est systématiquement sur les quatres mois à venir. En reprennant les notations précédentes, on considère $F(t, t + \tau) = F(t, T)$ qu'on renote $F(t, \tau)$. Ainsi la deuxième variable n'est plus le temps de maturation du contrat forward en absolu mais un *temps à maturation* qui est *Mois+1, Mois+2, Mois+2, Mois+4* pour notre base de données. Nous avons maintenant quatre fonctions à une variable $F(t, \tau_{1})$, $F(t, \tau_{2})$, $F(t, \tau_{3})$ et $F(t, \tau_{4})$.  On effectue une diffusion de prix sur chacune de ces fonctions. 
+    - Les dates comme précedemment
+    - Création de l'objet diff
+    - Génération d'une diffusion de prix forward avec un prix spot généré à chaque étape autour du forward. La fonction `pilipovic_dynamic_forward_simple` s'en charge. On ne fait dans cette fonction la diffusion que de $F(t, \tau_{1})$ car le prix spot qui nous intéresse généré à chaque étape est calculé autour de ce prix au mois+1. 
+    - Itère cette fonction 1000 fois et en rangeant le résultat dans un fichier csv `Diffusion_model_dynamic_forward`
+    - Génération d'une diffusion de prix forward avec de multiples scénarios spot sur les quatre mois suivants calculés à chaque étape. C'est à dire qu'au jour t, ayant diffusé nos quatres fonctions forward on a accès à une estimation des forwards pour les quatres mois à venir. De multiples scénarios de prix spot sont ensuite générés à partir de ces forwards estimés au jour t. Le lendemain au jour t+1 la diffusion de forward a donnée de nouvelles estimations pour les forwards sur les quatres mois à venir. Ainsi, on génère de nouveaux scénarios spots.
+    - Le résultat de `pilipovic_dynamic_forward_multiple` est donc quatre diffusion des forwards entre end_date et end_date_sim et un dictionnaire. Les clés de ce dictionnaire étant chaque jour de la simulation et les valeurs associées des tableaux contenant les **m** scénarios de spot sur les quatres mois suivants chaque date.
+    - On affiche deux graphiques par souci de clarté, le deuxième est un exemple de diffusion des quatres forwards avec temps à maturation fixé. Le premier est un exemple d'une des 1000 itérations de pilipovic_dynamic_forward_simple.
+
+- `execRF.py`: Changement d'approche. Au lieu de considérer l'évolution du prix spot avec des formules stochastiques il s'agit d'implémenter des algorithmes de machine learning de prédiction. Random Forest en regression à été utilisé.
+    - On créé d'abord nos features...
+
+  
+
+
+
+
+
 
 
 ## Partie 3 : Optimisation du stockage
