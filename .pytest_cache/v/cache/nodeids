@@ -1,0 +1,8 @@
+[
+  "test/test_scrap_saver.py::test_price_type",
+  "test/test_tree_reducer.py::test_builder",
+  "test/test_tree_reducer.py::test_data_loader",
+  "test/test_tree_reducer.py::test_dist_sym",
+  "test/test_tree_reducer.py::test_dist_T_max",
+  "test/test_tree_reducer.py::test_sym_mat_dist"
+]
