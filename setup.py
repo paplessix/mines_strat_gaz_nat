@@ -3,6 +3,5 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="mines_strat_gaz",
-    packages=['scrap','storage_optimisation','Diffusion_prix']
-)
+    name="strat_gaz",
+    packages=find_packages())

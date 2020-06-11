@@ -1,5 +1,5 @@
-from storage_optimisation.optimizer import Optimizer
-from storage_optimisation.stockage import Stockage, Serene_Nord_20
+from strat_gaz.storage_optimisation.optimizer import Optimizer
+from strat_gaz.storage_optimisation.stockage import Stockage, Serene_Nord_20
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np

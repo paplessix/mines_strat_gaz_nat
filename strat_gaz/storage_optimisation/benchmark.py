@@ -4,8 +4,8 @@ import numpy as np
 from pathlib import Path
 from time import time
 
-from storage_optimisation.optimizer import Optimizer, profit
-from storage_optimisation.stockage import Stockage
+from strat_gaz.storage_optimisation.optimizer import Optimizer, profit
+from strat_gaz.storage_optimisation.stockage import Stockage
 
 
 path_spot = Path(__file__).parent.parent / 'Data' / 'spot_history_HH.csv'

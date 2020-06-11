@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from storage_optimisation.optimizer import Optimizer, profit
-from storage_optimisation.stockage import Stockage
+from strat_gaz.storage_optimisation.optimizer import Optimizer, profit
+from strat_gaz.storage_optimisation.stockage import Stockage
 
 #### Simulations Parameters
 INDEX = 1
@@ -42,7 +42,7 @@ class Simulation :
         self.columns = self.data.columns
         self.X_0 = np.zeros(len(self.data.index))
     
-    def add_line_to_csv(simulation, )
+    def add_line_to_csv(simulation):
         pass
 
     
