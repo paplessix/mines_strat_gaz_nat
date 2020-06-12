@@ -2,8 +2,8 @@ from NewDiffusion import DiffusionSpot
 import pandas as pd
 import numpy as np
 
-path1 = 'C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/githubprojet/mines_strat_gaz_nat/scrap/data_save_28_04/spot_€_MWh_PEG.csv'
-path2 = 'C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/githubprojet/mines_strat_gaz_nat/scrap/data_save_28_04/forward_€_MWh_PEG.csv'
+path1 = 'spot_€_MWh_PEG.csv'
+path2 = 'forward_€_MWh_PEG.csv'
 
 #best to run from an anaconda prompt or terminal rather than from interactive console
 diff = DiffusionSpot(path1, path2, forward_diffusion=True)

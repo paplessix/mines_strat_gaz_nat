@@ -6,7 +6,7 @@ import time
 #best to run from an anaconda prompt or terminal rather than from interactive console
 
 #t0 = time.time()
-path1 = 'C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/Power_next_spot.xlsx'
+path1 = 'Power_next_spot.xlsx'
 path2 = ''
 
 #Initial formatting of these dataframes so the module can work correctly specifically for the PowerNext file
@@ -19,7 +19,7 @@ df.reset_index(inplace=True, drop=True)
 df.to_csv('C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/New_Power_Next_spot.csv', date_format = '%Y-%m-%d', columns=['Day', 'Price'], index=False)
 
 
-#Now we can work with our newly formatted file!
+#Now we can work with our newly oformatted file!
 path_new = 'C:/Users/spart/Documents/MinesParis/1A/Info/ProjetInfo/New_Power_Next_spot.csv'
 diff = DiffusionSpot(path_new, path2, forward_diffusion=False)
 
