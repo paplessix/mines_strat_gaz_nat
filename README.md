@@ -6,7 +6,8 @@ Projet Ecole des Mines de PARIS en partenariat avec E_Cube :
 - *Pierre-Adrien Plessix*
 - *Youri Tchouboukoff*
 
-to install useful Paskages of this project type : `pip install -r setup.py`
+to install useful Paskages of this project type : `pip install -r requirements.py`
+`pip install -e`
 ## Partie 1 : Web_Scraping
 -------------------
 
@@ -20,11 +21,11 @@ Cependant le principal problème est que les données ne sont pas stoquées en p
 
 On utilise donc un module qui permet donc de cliquer sur des boutons. Pour se placer à chaque fois dans les configurations où l'on a accès aux données dans le code HTML. On utilise alors un Parser pour récupérer les données brutes
 
-Dans le cadre de la lecture d'un Graphe, il st nécessaire de pouvoir passer la souris au dessus de la courbe pour avoir accès aux valeurs de prix à cet instant. Encore une fois dans le cas contraire ces données ne sont pas accesible dans le code de la page. On fait donc bouger la souris d'un pas suffisament petit pour passer au dessus de tous les points du graphique. 
+Dans le cadre de la lecture d'un Graphe, il est nécessaire de pouvoir passer la souris au dessus de la courbe pour avoir accès aux valeurs de prix à cet instant. Encore une fois dans le cas contraire ces données ne sont pas accesible dans le code de la page. On fait donc bouger la souris d'un pas suffisament petit pour passer au dessus de tous les points du graphique. 
 
 Le Package en lui-même est composé de 3 sous-modules :
 
-- `graph_scraper` : C'est itérateur est basé sur un algorithme de lecture des données de type graphes dans une page de Powernext, ce qui dans notre cas correspond à l'extraction de prix _Spots_. Il utilise le module `Selenium` pour bouger la souris sur toute la largeur du graphique. Il itère sur toutes les types de _GNL_ différend. 
+- `graph_scraper` : Cet itérateur est basé sur un algorithme de lecture des données de type graphes dans une page de Powernext, ce qui dans notre cas correspond à l'extraction de prix _Spots_. Il utilise le module `Selenium` pour bouger la souris sur toute la largeur du graphique. Il itère sur toutes les types de _GNL_ différend. 
     - `Parameters`:
       - Il prend en argument `specific_type`, par défaut `False` , mais on peut ainsi accéder un type de GNL précis.
       - Il prend en argument `link`, le lien auquel chercher le lien le graphique. 
@@ -50,23 +51,20 @@ Le Package en lui-même est composé de 3 sous-modules :
   > Ces deux modules ont donc une architecture assez similaire, et les méthodes de Scrapping, que ce soit dans le cadre de graphe, ou bien dans le cadre de tableaux, sont intégrés dans une classe `Browser`.
   
   > Ces deux premiers modules reposent sur un driver, `chromedriver.exe`, fournit avec le repo, et disponible à la racine du Repo. Il est nécessaire de posséder Chrome pour faire fonctionner les tâches automatisées. 
-- `scrap_saver` : Fonction qui construit et update la base de données à partir des données fournies par <a href= #table_scraper>`table_scraper`</a> et `graph_scraper`, en deux partie, il scrappe d'abord toutes les données du jour, et enfin il ajoute aux données existantes les données qui n'ont pas été encore enregistrées. 
+- `scrap_saver` : Fonction qui construit et update la base de données à partir des données fournies par les `Browser` de  <a href= #table_scraper>`table_scraper`</a> et `graph_scraper`, en deux partie, il scrappe d'abord toutes les données du jour, et enfin il ajoute aux données existantes les données qui n'ont pas été encore enregistrées. 
   > On considère ici que il n'y a pas de consolidation à posteriori des données. Faisant que les données précedemment enregistrées ne puissent plus être considérée valables
   - Le Module est lancé par appel dans le terminal de la commande :
 `python Web_Scraping/scrap_saver.py -d data_directory -p Product_type -s Specific_Market`
     - Où `-d/--directory` correspond à la position relative du fichier d'enregistrement des données
     - Où `-p/--product` correspond au type de produit dont on désire la mise à jour, si non spécifié les deux, sinon rentrer `'Spot' ou 'Forward'`
-    - Où `-s/--specific` correspond au marché désiré. 
-    - 'Rajouter des classe pour atteindre des données intéressantes ? Mettre sous forme de classe ? '
+    - Où `-s/--specific` correspond au marché désiré. On peut utiliser un des acronymes disponibles sur **Powernext**.  
+    - L'appel avec `-h / --help` permet d'afficher l'aide. 
+
   - Le Module retourne l'ensemble des données mises à jour (si elles n'existent pas, le module crée l'architecture de donnée) au format `.csv`  
 
 > Dans notre mise en place, les données les plus récentes sont sockées dans le fichier `./Data`. Où certaines sauvegardes sont conservées
 
-Tests mis en place : 
-- 1. 
-- 2. 
-- 3.
-- 
+
 ## Partie 2 : Diffusion de Prix 
 -------------------
 Module Diffusion_prix qui a pour objectif de génerer des diffusions de prix spot (instantané) à partir des données récupérées dans le module 1, c'est à dire l'historique des prix spots et forwards sur différents marchés, notamment PEG (France).
@@ -118,15 +116,46 @@ La première étape consiste à optimiser la gestion d'un stockage de Gaz nature
 ### Modélisation
 
 On va modéliser un Stockage souterrain de Gaz cela correspond à la Classe `Stockage` définie dans `storage_optimisation/stockage.py`.
-- Le stockage possède des contraintes intrinsèques que sont essentiellement sont volume et son remplissage au début de la période
-- Le Stockage possède des débits d'injection et de soutirage qui varient en fonction du remplissage
+- Le stockage possède des contraintes intrinsèques que sont essentiellement sont volume et son remplissage au début de la période.
+- Le Stockage possède des débits d'injection et de soutirage qui varient en fonction du remplissage. 
 - Dans une optique d'assurer des stocks stratégiques, le stockage doit être quasimment plein au début de l'hiver. Et dans une volonté d'assurer la pérennité du stockage, celui-ci doit être quasi-vide au début de l'été. Cela se représente par des fonctions portes que doit éviter le volume de remplissage du stockage
 
 - Les règles dépendent des caractéristiques des  différents stockage, c'ets pourquoi l'on travaillera avec sous-classes, correspondant avec des stockages, ayant des valeurs nominales différentes. Certains sont des stockages à la grande capacité mais très peu flexible sur l'achat-cente, quand d'autres sont beaucoup plus flexibles 
 
-Le stockage est don définit par la classe `Stockage`, qui se construit à partir d'un volume maximal `Vmax`, un volume initial `Vinit`, les prix sur une période `data`, mais aussi la vente algébrique pour chacun de ces jours `evolution`. 
+Le stockage est donc définit par la classe `Stockage`, qui se construit à partir d'un volume maximal `Vmax`, un volume initial `Vinit`, les prix sur une période `data`, mais aussi la vente algébrique pour chacun de ces jours `evolution`. 
 
-La classe `Stockage` possède les attibuts
-- `Vmax`,`data`,`Vinit`,`evolution`
-- 
+La classe `Stockage` possède les attributs
+- `Vmax`, `data`, `Vinit`, `evolution`
+- `data` qui correspond à l'évolution des prix sur la pértiode d'existence du stockage
+- `dates`, l'ensemble des dates de la période sur laquelle on considère le stockage, et pour lesquelles on a une donnée de prix.
+- `index_i` et `index_f`, les numéros d'index initial et final de la dataframe
+- `N` le nombre de jours considérés
+- `m` un objet de la classe `Matrice` qui contient un ensemble de matrices particulières utiles pour effectuer les calculs.
+- `months_con`, les contraintes de remplissage les premiers du mois encodées sous la forme d'un dictionnaire `{ "numéro du mois" : ['%min', '%max'], ...}`
+- `v` le volume correspondant à l'évolution du volume considérée dans `evolution`
+- `volume_end`
+- `vect_min`
+- `vect_max`
+- `lim_min`
+- `lim_max`
+
+Méthodes : 
+- `plot_threshold`
+- `plot_tunnel`
+- `plot_injection`
+- `volume_vect`
+
+On définit à partir de cette classe `Stockage` touteune variété de sous classe qui héritent de cette classe `Stockage`, mais qui correspondent à des paramètres différent en capacité de soutirage et d'injection. Ces classes prennent en entrée les mêmes arguments que la classe `Stockage` initiale.
+
+Ces classes sont : 
+
+- `Sediane_Nord_20`
+- `Saline_20`
+- `Serene_Atlantique_20`
+- `Serene_Nord_20`
+
+Ces différents stockages correspondent à ce qui est attendu 
+
+
+> Classe `Matrice`
 
