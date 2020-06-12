@@ -132,7 +132,7 @@ class DiffusionSpot:
         plt.scatter(price[1:], price[:-1], color = 'b', marker = 'x')
         plt.legend('G_{t+1} = Y against G{t] = X')
         plt.show()
-        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y )
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y)
         return slope, intercept, r_value, p_value, std_err 
 
     def mean_reversion(self, start_date:str, end_date:str, summer=False, winter=False, allparams=False, spot=True, remove_weekends=False):

@@ -6,7 +6,7 @@ import time
 #best to run from an anaconda prompt or terminal rather than from interactive console
 
 t0 = time.time()
-path1 = 'Power_next_spot.xlsx'
+path1 = '../Data/Power_next_spot.xlsx'
 path2 = ''
 
 #Initial formatting of these dataframes so the module can work correctly specifically for the PowerNext file
@@ -16,11 +16,11 @@ df.columns = ['Day', 'Price']
 df = df.loc[df['Price'] != '-']
 df.drop_duplicates(inplace=True, subset=['Day'])
 df.reset_index(inplace=True, drop=True)
-df.to_csv('New_Power_Next_spot.csv', date_format = '%Y-%m-%d', columns=['Day', 'Price'], index=False)
+df.to_csv('../Data/New_Power_Next_spot.csv', date_format = '%Y-%m-%d', columns=['Day', 'Price'], index=False)
 
 
 #Now we can work with our newly formatted file!
-path_new = 'New_Power_Next_spot.csv'
+path_new = '../Data/New_Power_Next_spot.csv'
 diff = DiffusionSpot(path_new, path2, forward_diffusion=False)   #Diffusing around historical mean not a forward price
 start_date_long = '2011-09-8'
 end_date_long = '2013-09-10'
@@ -55,6 +55,6 @@ columns = diff.daterange(end_date, end_date_sim)
 rows = [f'simulation n°{i}' for i in range(n)]
 rows.append('moyenne scenarios')
 df = pd.DataFrame(data = final_tab, columns = columns, index = rows)
-df.to_csv('Diffusion_model_historical_mean')
+df.to_csv('../Data/Diffusion/Diffusion_model_historical_mean')
 
 
