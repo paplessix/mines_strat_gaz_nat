@@ -6,3 +6,4 @@ scipy
 networkx
 setuptools
 lxml    
+flask

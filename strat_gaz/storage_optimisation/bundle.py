@@ -8,7 +8,7 @@ from strat_gaz.storage_optimisation.optimizer import Optimizer, profit
 from strat_gaz.storage_optimisation.stockage import Stockage
 
 #### Simulations Parameters
-INDEX = 1
+INDEX = 'PA'
 SIZE = 10000
 V_INIT = 100
 STOCKAGE = None
@@ -31,9 +31,50 @@ def list_csv_dir(directory : str):
                      filter(lambda x: x[-4:] == '.csv', os.listdir(directory))))
     return files
 
-class Simulation : 
+class Simulation:
+    def __init__(self, INPUT, OUTPUT,INDEX, SIZE, V_INIT):
+        self.output = OUTPUT
+        self.index = INDEX
+        self.size = SIZE
+        self.v_init = V_INIT
+        data_loader_csv(INPUT)
+        output_initializer(OUTPUT)
+        
+    def data_loader_csv(self, path):
+        df = pd.read_csv(path, header = 0, index_col = 0)
+        df  =df .transpose()
+        self.data = df.iloc[0:50,:]
+        self.data.index = pd.to_datetime(self.data.index)
+        self.columns = self.data.columns
+        self.X_0 = np.zeros(len(self.data.index))
+
+    def output_initializer(self,path):
+        # if not existing create the file
+        # verify it has the good shape
+        # detect the already computed simulations number
+    
+
+    def execute(self, number)
+        # while 
+        # call n-time the optimizer
+        # cal add _line to increment the csv
+    
+    def add_line_to_csv(self, simulation, profits)
+        # open the csv and add a new line 
+    
+    def plot_data_boxplot(self)(self, mean  = False, Boxplot  = False):
+        self.data.T.boxplot()
+        plt.show()
+
+    def value_at_risk
+
+    
+
+    
+class Simulati : 
     def __init__ (self  ):
-        pass
+        #  recuperer les simulations qui ont été faites
+        #
     def data_loader_csv(self, path):
         df = pd.read_csv(path, header = 0, index_col = 0)
         df  =df .transpose()
@@ -43,8 +84,8 @@ class Simulation :
         self.X_0 = np.zeros(len(self.data.index))
     
     def add_line_to_csv(simulation):
-        pass
-
+        
+        # rajouter une ligne avec n°simulation et profit 
     
     def simulation_plot(self, mean  = False, Boxplot  = False):
         print(self.data.index)
@@ -53,6 +94,7 @@ class Simulation :
         plt.show()
    
     def optimizer(self, V_0 ):
+        # prend en argument une situation renvoie le profit qu'on y fait 
         self.profits = []
         self.strategies = []
         df_inter = pd.DataFrame()
@@ -81,7 +123,7 @@ class Simulation :
         plt.show()
     
     def value_at_risk(self, disp = True, verbose = True ):
-        try:
+        #calculer la var sur 1 ou 3 
             profits = self.profits
             print('Nb simulations : ', len(profits))
             print(profits)

@@ -1,8 +1,0 @@
-{
-  "test/test_scrap_saver.py::test_price_type": true,
-  "test/test_tree_reducer.py::test_builder": true,
-  "test/test_tree_reducer.py::test_data_loader": true,
-  "test/test_tree_reducer.py::test_dist_T_max": true,
-  "test/test_tree_reducer.py::test_dist_sym": true,
-  "test/test_tree_reducer.py::test_sym_mat_dist": true
-}
