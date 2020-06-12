@@ -101,11 +101,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--directory", help="where to update files")
     parser.add_argument(
-        "-p", "--product", help=" Prodct type required default = ['spot','forward]")
+        "-p", "--product", help=" Product type required default = ['spot','forward]")
     parser.add_argument("-s", "--specific", help="Specific market desired")
     args = parser.parse_args()
+
     if not args.directory:
-        directory = './scrap/last_save'
+        directory = './strat_gaz/scrap/last_save'
     else:
         directory = args.directory
 
