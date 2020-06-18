@@ -6,11 +6,15 @@ Projet Ecole des Mines de PARIS en partenariat avec E_Cube :
 - *Pierre-Adrien Plessix*
 - *Youri Tchouboukoff*
 
-to install useful Paskages of this project type : `pip install -r requirements.py`
-`pip install -e`
+to install useful Packages of this project, type : 
+```
+pip install -r requirements.py
+pip install -e .
+```
+
 ## Partie 1 : Web_Scraping
 -------------------
-
+  > Ce module repose sur un driver, `chromedriver.exe`, fournit avec le repo, et disponible à la racine du Repo. Il est nécessaire de posséder Chrome pour faire fonctionner les tâches automatisées. 
 Module scrap_saver qui a deux fonctions : initialiser la BDD et updater la BDD. 
 
 Les données sont extraites depuis `https://www.powernext.com/futures-market-data` pour les prix **futures**. Tandis que les prix **Spots** sont issus de `https://www.powernext.com/spot-market-data`. 
@@ -50,7 +54,7 @@ Le Package en lui-même est composé de 3 sous-modules :
 
   > Ces deux modules ont donc une architecture assez similaire, et les méthodes de Scrapping, que ce soit dans le cadre de graphe, ou bien dans le cadre de tableaux, sont intégrés dans une classe `Browser`.
   
-  > Ces deux premiers modules reposent sur un driver, `chromedriver.exe`, fournit avec le repo, et disponible à la racine du Repo. Il est nécessaire de posséder Chrome pour faire fonctionner les tâches automatisées. 
+
 - `scrap_saver` : Fonction qui construit et update la base de données à partir des données fournies par les `Browser` de  <a href= #table_scraper>`table_scraper`</a> et `graph_scraper`, en deux partie, il scrappe d'abord toutes les données du jour, et enfin il ajoute aux données existantes les données qui n'ont pas été encore enregistrées. 
   > On considère ici que il n'y a pas de consolidation à posteriori des données. Faisant que les données précedemment enregistrées ne puissent plus être considérée valables
   - Le Module est lancé par appel dans le terminal de la commande :
