@@ -14,7 +14,7 @@ from scrap.table_scraper import Browser as Browser_forward
 
 
 def filename_constructor(directory, info, active, price_type):
-    """ Function that construct the path to the file depending on the GNL type
+    """ Function that constructs the path to the file depending on the GNL market type
     Return:
         - a string corresponding to the normalized filename, hadling the specificities
         of the set of data.

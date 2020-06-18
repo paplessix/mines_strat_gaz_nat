@@ -61,6 +61,7 @@ class Stockage():
         """ Function that computes the time-serie of the volume
         the function uses a triangular matrix and the initial volume to compute the volume 
         """
+        #
         v_vect = self.Vmax*np.dot(self.m.triang_inf,self.evolution) + self.Vinit*np.ones(self.N)
         return v_vect
 
@@ -90,6 +91,7 @@ class Stockage():
             if stock_level <= self.sout_list[i][0]: # A rendre +modualir
                 return 1/self.D_nom_sout*(self.sout_list[i-1][1] + (self.sout_list[i][1] - self.sout_list[i-1][1])/(self.sout_list[i][0]-self.sout_list[i-1][0])*(stock_level-self.sout_list[i-1][0]))
         return 0
+
     def sout_corrige(self,X : np.array):
         """
         Function that for an evolution time serie determines the maximal racking
@@ -126,6 +128,7 @@ class Stockage():
         inj_correction = np.vectorize(self.inj_correction)
         return inj_correction(V)
     
+    ###################### A REFAIRE
     def threshold(self):
         begin = self.dates.min()
         end = self.dates.max()
@@ -170,7 +173,11 @@ class Stockage():
     threshold_con = property(threshold)
     
     def min_v(self):
-        """function that creates 
+        """Function that creates the minimum limit of volume 
+        The function values 0 everywhere except at the thresholds
+        where it values according to the documentation
+        Return :
+        - Vector of minimum volume each day : np.array
         """
         self.data.loc[:,'minV'] = 0
         for i in self.threshold_con.keys():
@@ -180,6 +187,12 @@ class Stockage():
         return vect_min
 
     def max_v(self):
+        """Function that creates the maximum limit of volume
+        The function values Vmax everywhere except at the thresholds
+        where it values according to the documentation
+        Return :
+            - Vector of maximum volume each day  : np.array
+        """
         self.data.loc[:,"maxV"] = 1
         for i in self.threshold_con.keys():
             self.data.loc[i,'maxV'] = self.threshold_con[i][1]
@@ -191,44 +204,97 @@ class Stockage():
     vect_max = property (max_v)
     
     def tunnel_max(self):
+        """ Function that computes the maximum value of the volume permitted
+        by the constraints
+
+        The function computes the min between the vector returned by Stockage.min_v
+        and the vectors returned by Stockage.chapiteau_max. Where Stockage.chapiteau_max returns
+        the maximal behaviour authorized by the constraints, meaning the limit behaviour to respect
+        the constraint of the beginning of some months.
+            e-g : Les positions autorisés en ne faisant que acheter avant et que vendre après le 1 aout,
+            tout en étant à 90 % de remplissage ce jour là.
+        Parameters:
+            - self
+        Return :
+            - Vector of minimum volume each day  : np.array
+        """
         L=np.zeros((len(self.threshold_con.keys()),self.N)) # Construire directement à la bonne taile 
-        def chapiteau_max(i,dirac):
+        
+        def chapiteau_max(i : int,dirac : float):
+            """Function that computes the maximum feasible behaviour, starting symetrically from
+            a day of legal obligation 
+            Parameters :
+                - self
+                - index : position of the threshold
+                - dirac : value of the threshold
+
+            Return:
+                - np.array : which is the limit evolution. 
+            """
             serie = np.zeros(self.N)
             i_max = self.N-1
             i_min = 0
             serie[i] = dirac
             for pas in range(1,self.N):
-                if i + pas <= i_max:
+                if i + pas <= i_max: # verify it is still in the limits
+                    # inject as much gas as possible moving forward
                     serie[i+pas] = serie[i+pas-1] + self.inj_correction(self.Vmax*serie[i+pas-1])
-                if i - pas >= i_min : 
+                if i - pas >= i_min :
+                    # rack as much gas as possible moving backward 
                     serie[i-pas] = serie[i-pas+1] + self.sout_correction(self.Vmax*serie[i-pas+1])
             return serie        
         for index, j  in enumerate(self.threshold_con.keys()):
             L [index] = (self.Vmax*chapiteau_max(j -self.index_i,self.threshold_con[j][1]))
-        L = np.vstack((L,self.Vmax*np.ones(self.N)))
+        L = np.vstack((L,self.Vmax*np.ones(self.N))) # add a line of Vmax (superior limit)
         return np.array(L).min(axis =0) 
 
     def tunnel_min(self):
+        """Function that computes the minimum value of the volume permitted
+        by the constraints
+
+        Symétric from tunnel_max
+
+        Parameters:
+            - self
+        Return :
+            - Vector of minimum volume each day  : np.array
+        """
         L=np.zeros((len(self.threshold_con.keys()),self.N))
         def chapiteau_min(i,dirac):
+            """Function that computes the minimum feasible behaviour, starting symetrically from
+            a day of legal obligation 
+            Parameters :
+                - self
+                - index : position of the threshold
+                - dirac : value of the threshold
+
+            Return:
+                - np.array : which is the limit evolution. 
+            """
+
             serie = np.zeros(self.N)
             i_max = self.N-1
             i_min = 0
             serie[i] = dirac
             for pas in range(1,self.N):
                 if i + pas <= i_max:
+                    # rack as much gas as possible moving forward
                     serie[i+pas] = serie[i+pas-1] - self.sout_correction(self.Vmax*serie[i+pas-1])
-                if i - pas >= i_min : 
+                if i - pas >= i_min :
+                    # inject as much gas as possible moving backward
                     serie[i-pas] = serie[i-pas+1] - self.inj_correction(self.Vmax*serie[i-pas+1])
             return serie        
         for index, j in enumerate(self.threshold_con.keys()):
             L[index] = (self.Vmax*chapiteau_min(j -self.index_i,self.threshold_con[j][0]))
         L = np.array(L)
-        L = np.vstack((L,np.zeros(self.N)))
+        L = np.vstack((L,np.zeros(self.N))) # add a line of zeros (inferior limit)
         return np.array(L).max(axis =0 )
 
     def tunnel(self):
-        # create the tunnel 
+        """ Function that creates the attribute of the optimization problem solution domain.
+        Return :
+            - None
+        """
         self.lim_min =   self.tunnel_min()
         self.lim_max = self.tunnel_max()
    
@@ -238,14 +304,23 @@ class Stockage():
         plt.plot(self.dates,self.volume_vect())
     
     def plot_threshold(self):
+        """ function that plots the legal obligation thresholds
+        """
         plt.plot(self.dates,self.vect_min)
         plt.plot(self.dates,self.vect_max)
     
     def plot_tunnel(self):
+        """ function that plots the feasible solutions domain 
+        """
         plt.plot(self.dates,self.lim_min)
         plt.plot(self.dates,self.lim_max)
+    
     def plot_injection(self):
+        """function that plots the evolution, and the evolution limits
 
+        The function plots the evolution, using algebric values, the limits induced by
+        the injection/racking constraints are 
+        """
         var_sup = self.inj_corrige(self.evolution)
         var_inf = self.sout_corrige((self.evolution))
         plt.plot(self.dates,self.evolution, label = 'evol')
@@ -261,7 +336,7 @@ class Stockage():
 
 class Sediane_Nord_20 (Stockage):
     """
-    Property of a Sediane_Nord_20 storage
+    Properties of a Sediane_Nord_20 storage
     """
     def __init__(self,Vmax,Vinit, dates, evolution):
         Stockage.__init__(self, Vmax, Vinit,dates, evolution)
@@ -286,7 +361,7 @@ class Sediane_Nord_20 (Stockage):
 
 class Saline_20 (Stockage):
     """
-    Property of a Saline_20 storage
+    Properties of a Saline_20 storage
     """
     def __init__(self,Vmax,Vinit, dates, evolution):
         Stockage.__init__(self, Vmax, Vinit,dates, evolution)
@@ -313,7 +388,7 @@ class Saline_20 (Stockage):
 
 class Serene_Atlantique_20 ( Stockage) :
     """
-    Property of a Serene_Atlantique_20 storage
+    Properties of a Serene_Atlantique_20 storage
     """
 
     def __init__(self,Vmax,Vinit, dates, evolution):
@@ -342,7 +417,7 @@ class Serene_Atlantique_20 ( Stockage) :
 
 class Serene_Nord_20 ( Stockage) :
     """
-    Property of a Serene_Nord_20 storage
+    Properties of a Serene_Nord_20 storage
     """
         
     def __init__(self,Vmax,Vinit, dates, evolution):
@@ -370,7 +445,7 @@ class Serene_Nord_20 ( Stockage) :
 
 def main():
     """
-    Main functino that show some state of the storage
+    Main function that shows some state of the storage
     """
     path_spot = Path(__file__).parent.parent / 'Data' / 'spot_history_HH.csv'
 
