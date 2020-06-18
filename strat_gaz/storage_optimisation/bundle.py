@@ -97,7 +97,7 @@ class Simulation:
         self.X_0 = stock.evolution
 
         print('initial_investment', self.v_init*df_inter["Price"][0])
-        profits =  -self.v_init*df_inter["Price"][0] -profit(stock.evolution, df_inter["Price"])
+        profits =  -self.v_init*df_inter["Price"][0] -profit(stock.Vmax*stock.evolution, df_inter["Price"])
         vol_fin = stock.volume_end
         return profits, vol_fin
 
@@ -116,5 +116,5 @@ class Simulation:
         plt.show()
 
 simul = Simulation(INPUT_PATH, OUTPUT_PATH, INDEX, SIZE,V_INIT,STOCKAGE)
-simul = plot_data_boxplot()
+# simul = plot_data_boxplot()   
 simul.execute(50)

@@ -83,5 +83,5 @@ class Optimizer :
         Return :
             - None
         """
-        res = minimize(lambda x:profit(x, self.prices), self.X_0 ,method='SLSQP', constraints = [self.c1,self.c4,self.c5, self.c6, self.c7], options={'disp' : True, 'ftol': 1e-1})
+        res = minimize(lambda x:profit(self.stock.Vmax*x, self.prices), self.X_0 ,method='SLSQP', constraints = [self.c1,self.c4,self.c5, self.c6, self.c7], options={'disp' : True, 'ftol': 1e-1})
         self.stock.evolution = res.x

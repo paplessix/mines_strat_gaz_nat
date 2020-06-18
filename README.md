@@ -128,28 +128,15 @@ On va modéliser un Stockage souterrain de Gaz cela correspond à la Classe `Sto
 
 Le stockage est donc définit par la classe `Stockage`, qui se construit à partir d'un volume maximal `Vmax`, un volume initial `Vinit`, les prix sur une période `data`, mais aussi la vente algébrique pour chacun de ces jours `evolution`. 
 
-La classe `Stockage` possède les attributs
-- `Vmax`, `data`, `Vinit`, `evolution`
-- `data` qui correspond à l'évolution des prix sur la pértiode d'existence du stockage
-- `dates`, l'ensemble des dates de la période sur laquelle on considère le stockage, et pour lesquelles on a une donnée de prix.
-- `index_i` et `index_f`, les numéros d'index initial et final de la dataframe
-- `N` le nombre de jours considérés
-- `m` un objet de la classe `Matrice` qui contient un ensemble de matrices particulières utiles pour effectuer les calculs.
-- `months_con`, les contraintes de remplissage les premiers du mois encodées sous la forme d'un dictionnaire `{ "numéro du mois" : ['%min', '%max'], ...}`
-- `v` le volume correspondant à l'évolution du volume considérée dans `evolution`
-- `volume_end`
-- `vect_min`
-- `vect_max`
-- `lim_min`
-- `lim_max`
 
-Méthodes : 
+Méthodes pour l'affichage des caractériqtiques, à tout instant il peut être intéressant d'afficher les données qui nous intéressent. Pour cela on a accès à plusieurs fonctions qui fonctionnent sur la base de `matplolib.pyplot`.
 - `plot_threshold`
 - `plot_tunnel`
 - `plot_injection`
-- `volume_vect`
 
-On définit à partir de cette classe `Stockage` touteune variété de sous classe qui héritent de cette classe `Stockage`, mais qui correspondent à des paramètres différent en capacité de soutirage et d'injection. Ces classes prennent en entrée les mêmes arguments que la classe `Stockage` initiale.
+Après les avoir appelées, faire `plt.show()` pour afficher le plot ainsi formé
+
+On définit à partir de cette classe `Stockage` toute une variété de sous classe qui héritent de cette classe `Stockage`, mais qui correspondent à des paramètres différent en capacité de soutirage et d'injection. Ces classes prennent en entrée les mêmes arguments que la classe `Stockage` initiale. La classe `Stockage` porte en elle de façon générique les paramètres de la classe `Sediane_Nord_20`.
 
 Ces classes sont : 
 
@@ -158,8 +145,27 @@ Ces classes sont :
 - `Serene_Atlantique_20`
 - `Serene_Nord_20`
 
-Ces différents stockages correspondent à ce qui est attendu 
+Ces différents stockages ont les propriétés des stockages français, que ce soit en taille, ou en propriété d'injection/soutirage. 
 
 
-> Classe `Matrice`
+> Pour pouvoir réaliser ces calculs on se base la plupart du temps sur une classe `Matrice`, disponible dans `storage_optimisation/matrice/py`. Cette classe permet de construire des matrices aux formes spéciales permettant de profiter de la performance de `numpy` pour le calcul matriciel de grandeurs. 
 
+### Optimisation
+
+L'optimisation est assurée par le module `Optimizer` de `storage_optimisation/Optimizer.py`.
+
+Celui-ci est en charge de calculer la fonction de cout associé au stockage. Celle-ci est définie par
+$$
+f(x) = V_{max}.<x|p>
+$$
+où $x$ est le vecteur correspondant à l'attribut `evolution` de notre stockage, c'est à dire le pourcentage du volume max échangé chaque jour (algébriquement), et $p$ est le vecteur de tous les prix sur la période de temps considérée. 
+
+Un Benchmark montre que le cout de calcul augmente fortement plus les périodes considérées sont longues. Ainsi compter 100s pour une optimisation sur une année. 
+
+![alt text](img/benchmark.png)
+
+
+### Distribution du calcul
+
+## Partie 4 : WebApp 
+------------------

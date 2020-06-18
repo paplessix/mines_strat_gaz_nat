@@ -9,7 +9,7 @@ class Matrices :
             - N : int, the dimension of the data
         """
         self.N = N
-        self.triang_inf =  triang_inf_constructor
+        self.triang_inf =  self.triang_inf_constructor()
     
     def I_sell_constructor(self):
         I_sell = np.zeros((self.N,2*self.N))
