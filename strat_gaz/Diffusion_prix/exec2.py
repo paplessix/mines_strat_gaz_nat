@@ -26,7 +26,7 @@ start_date_long = '2011-09-8'
 end_date_long = '2013-09-10'
 start_date = '2012-09-10'
 end_date = '2013-09-10'
-end_date_sim = '2013-12-10'
+end_date_sim = '2014-09-10'
 number_of_diffusion = 1000
 tab, moyenne, long_term_means, n = diff.multiple_price_scenarios(start_date_long, end_date_long, start_date, end_date, end_date_sim, number_of_diffusion)
 diff.show_multiple(tab, moyenne, long_term_means, n)

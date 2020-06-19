@@ -9,8 +9,8 @@ path2 = '../scrap/last_save/forward_€_MWh_PEG.csv'
 
 diff = DiffusionSpot(path1, path2)
 start_date_long, start_date = '', '2020-02-17'   #Due to non availability of data on a longer time scale.
-end_date_long, end_date = '', '2020-04-28'
-end_date_sim = '2020-08-28'
+end_date_long, end_date = '', '2020-06-11'
+end_date_sim = '2021-06-11'
 
 #Let's get our forward and spot scenarios
 Forward_curve, Spot_curve = [], []
@@ -34,7 +34,7 @@ plt.show()
 columns = diff.daterange(end_date, end_date_sim, remove_weekends=True)
 rows = [f'simulation n°{i}' for i in range(number_of_scenarios)]
 df = pd.DataFrame(data=Spot_curve, columns = columns, index=rows)
-df.to_csv('../Data/Diffusion/Diffusion_model_dynamic_forward')
+df.to_csv('../Data/Diffusion/Diffusion_model_dynamic_forward_1000')
 
 #One forward diffusion and multiple spot diffusions
 Forward_curve2, Spot_curve2 = diff.pilipovic_dynamic_forward_multiple(start_date_long, end_date_long, start_date, end_date, end_date_sim, m = 2)
