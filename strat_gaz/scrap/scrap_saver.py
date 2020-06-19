@@ -9,8 +9,8 @@ import sys
 
 import pandas as pd
 
-from scrap.graph_scraper import Browser as Browser_spot
-from scrap.table_scraper import Browser as Browser_forward
+from strat_gaz.scrap.graph_scraper import Browser as Browser_spot
+from strat_gaz.scrap.table_scraper import Browser as Browser_forward
 
 
 def filename_constructor(directory, info, active, price_type):
