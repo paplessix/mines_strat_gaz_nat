@@ -18,10 +18,12 @@ def filename2(stockage, size, v_init, index):
 #### My simulations parameters
 INDEX = 'PA'
 SIZE = 100
-V_INIT = 20
-STOCKAGE = None
-INPUT_PATH = Path(__file__).parent.parent / 'Data' / 'Diffusion_model.csv'
-OUTPUT_PATH = Path(__file__).parent
+V_INIT = 40
+STOCKAGE = 'SedN'
+INPUT_PATH = Path(__file__).parent.parent / 'Data' / 'Diffusion' /'Diffusion_model_dynamic_forward_1000_PA.csv'
+OUTPUT_PATH = Path(__file__).parent / 'results' 
+
+N_EXECUTIONS = 10
 
 def list_csv_dir(directory : str):
     """
@@ -106,19 +108,20 @@ class Simulation:
         # Optimization
         print('=================')
         print('Optimizing:', column_index)
-        stock = Stockage(self.size, self.v_init, df_inter, self.X_0)
-        opti = Optimizer(stock) 
+        self.stock = Stockage(self.size, self.v_init, df_inter, self.X_0)
+        print(df_inter)
+        # self.X_0 = self.stock.lim_min+0.1
+        opti = Optimizer(self.stock) 
         opti.contraints_init()
         opti.optimize()
         print( 'Optimizing:', column_index, ' Status  = Done' )
 
 
-        self.X_0 = stock.evolution
-
+        self.X_0 =self.stock.evolution
         print('initial_investment', self.v_init*df_inter["Price"][0])
-        profits =  -self.v_init*df_inter["Price"][0] -profit(stock.Vmax*stock.evolution, df_inter["Price"])
-        vol_fin = stock.volume_end
-        return profits, vol_fin, stock.evolution
+        profits =  -self.v_init*df_inter["Price"][0] -profit(self.stock.Vmax*self.stock.evolution, df_inter["Price"])
+        vol_fin = self.stock.volume_end
+        return profits, vol_fin, self.stock.evolution
 
     
     def add_line_to_csv(self, simulation_index, profit, vol_fin ):
@@ -139,4 +142,4 @@ class Simulation:
 
 simul = Simulation(INPUT_PATH, OUTPUT_PATH, INDEX, SIZE,V_INIT,STOCKAGE)
 # simul = plot_data_boxplot()   
-simul.execute(20)
+simul.execute(N_EXECUTIONS)

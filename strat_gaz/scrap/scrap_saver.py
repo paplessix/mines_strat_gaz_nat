@@ -115,8 +115,8 @@ def main():
     elif args.product == 'forward':
         data_updater(directory, 'forward', args.specific)
     else:
-        data_updater('./scrap/last_save', 'forward', args.specific)
-        data_updater('./scrap/last_save', 'spot', args. specific)
+        data_updater('./strat_gaz/scrap/last_save', 'forward', args.specific)
+        data_updater('./strat_gaz/scrap/last_save', 'spot', args. specific)
 
 
 if __name__ == '__main__':
