@@ -58,7 +58,7 @@ Le Package en lui-même est composé de 3 sous-modules :
 - `scrap_saver` : Fonction qui construit et update la base de données à partir des données fournies par les `Browser` de  <a href= #table_scraper>`table_scraper`</a> et `graph_scraper`, en deux partie, il scrappe d'abord toutes les données du jour, et enfin il ajoute aux données existantes les données qui n'ont pas été encore enregistrées. 
   > On considère ici que il n'y a pas de consolidation à posteriori des données. Faisant que les données précedemment enregistrées ne puissent plus être considérée valables
   - Le Module est lancé par appel dans le terminal de la commande :
-`python Web_Scraping/scrap_saver.py -d data_directory -p Product_type -s Specific_Market`
+`python strat_gaz/scrap/scrap_saver.py -d data_directory -p Product_type -s Specific_Market`
     - Où `-d/--directory` correspond à la position relative du fichier d'enregistrement des données
     - Où `-p/--product` correspond au type de produit dont on désire la mise à jour, si non spécifié les deux, sinon rentrer `'Spot' ou 'Forward'`
     - Où `-s/--specific` correspond au marché désiré. On peut utiliser un des acronymes disponibles sur **Powernext**.  
