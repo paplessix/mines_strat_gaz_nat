@@ -79,10 +79,10 @@ class Simulation:
             stock = Stockage(self.size, self.v_init, df_inter, self.X_0)
             
             base = pd.DataFrame(index = stock.dates)
-            base['tunnel_min'] = stock.lim_min
-            base['tunnel_max'] = stock.lim_max
-            base['seuil_min'] = stock.vect_min
-            base['seuil_max'] = stock.vect_max
+            base['tunnel_min'] = stock.lim_min / stock.Vmax
+            base['tunnel_max'] = stock.lim_max / stock.Vmax
+            base['seuil_min'] = stock.vect_min / stock.Vmax
+            base['seuil_max'] = stock.vect_max / stock.Vmax
             base.T.to_csv(self.output / self.filename2 , index = True, header = True)
 
     def execute(self, number):
