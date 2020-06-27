@@ -2,14 +2,14 @@ import numpy as np
 import pandas as ps 
 import matplotlib.pyplot as plt 
 import networkx as nx
-from Diffusion import DiffusionSpot
+from strat_gaz.Diffusion_prix.NewDiffusion import DiffusionSpot
 from itertools import product
 
 
 def clustering(price,s,N):
     # Algorithm 4.1
     # Attention on utilise des unions : Que faire si on commence à avoir des valeurs qui se répètent
-    diff = DiffusionSpot('../Web_Scraping/spot_€_MWh_CEGH_VTP.csv','../Web_Scraping/forward_€_MWh_CZ_VTP.csv' )
+    diff = DiffusionSpot('../scrap/last_save/spot_€_MWh_PEG.csv','../scrap/last_save/forward_€_MWh_PEG.csv')
     samples = large_sampler(price,N)
     clusters = [{alea} for alea in samples]
     while len(clusters) > s:
@@ -34,7 +34,7 @@ def clustering(price,s,N):
 
 def large_sampler(price,N=10):
     large_simul=[]
-    diff = DiffusionSpot('../Web_Scraping/spot_€_MWh_CEGH_VTP.csv','../Web_Scraping/forward_€_MWh_CZ_VTP.csv' )
+    diff = DiffusionSpot('../scrap/last_save/spot_€_MWh_PEG.csv','../scrap/last_save/forward_€_MWh_PEG.csv' )
     for i in range (N):
         large_simul.append(diff.one_iteration(price))
     #plt.hist(large_simul)
@@ -68,7 +68,7 @@ def sign( value):
 def stochastic_approximation(price, bushiness, epsilon = 10e-8, maxiter = 1000):
     # 4.5
     N = 1000
-    diff = DiffusionSpot('../Web_Scraping/spot_€_MWh_CEGH_VTP.csv','../Web_Scraping/forward_€_MWh_CZ_VTP.csv' )
+    diff = DiffusionSpot('../scrap/last_save/spot_€_MWh_PEG.csv','../scrap/last_save/forward_€_MWh_PEG.csv')
     a_k = harmon()
     norm = np.inf
     Z = clustering(price,bushiness,10)

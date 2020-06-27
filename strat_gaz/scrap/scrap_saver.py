@@ -110,9 +110,9 @@ def main():
     else:
         directory = args.directory
 
-    if args.product == 'spot':
+    if args.product.lower() == 'spot':
         data_updater(directory, 'spot', args.specific)
-    elif args.product == 'forward':
+    elif args.product.lower() == 'forward':
         data_updater(directory, 'forward', args.specific)
     else:
         data_updater('./strat_gaz/scrap/last_save', 'forward', args.specific)

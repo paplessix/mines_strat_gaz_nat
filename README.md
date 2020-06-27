@@ -19,13 +19,13 @@ Module scrap_saver qui a deux fonctions : initialiser la BDD et updater la BDD.
 
 Les données sont extraites depuis `https://www.powernext.com/futures-market-data` pour les prix **futures**. Tandis que les prix **Spots** sont issus de `https://www.powernext.com/spot-market-data`. 
 
-Lorsque l'on s'intéresse à la structure générale du site, on comprend mieux comment l'on va s'attaquer à l'extraction des données. On comprend que le contenu est divisé en quatre ou cinq blocs, contenant chacun un graphique et une barre d'onglet permettant d'afficher les données du marché intéressant. 
+  Lorsque l'on s'intéresse à la structure générale du site, on comprend mieux comment l'on va s'attaquer à l'extraction des données. On comprend que le contenu est divisé en quatre ou cinq blocs, contenant chacun un graphique et une barre d'onglet permettant d'afficher les données du marché intéressant. 
 
-Cependant le principal problème est que les données ne sont pas stoquées en propre dans le code du site, mais son acquise par une requête d'un script `JavaScript` à une base de donnée extérieure au site. Il est donc nécessaire de se rapprocher le plus possible du comportement utilisateur. 
+  Cependant le principal problème est que les données ne sont pas stoquées en propre dans le code du site, mais son acquise par une requête d'un script `JavaScript` à une base de donnée extérieure au site. Il est donc nécessaire de se rapprocher le plus possible du comportement utilisateur. 
 
-On utilise donc un module qui permet donc de cliquer sur des boutons. Pour se placer à chaque fois dans les configurations où l'on a accès aux données dans le code HTML. On utilise alors un Parser pour récupérer les données brutes
+  On utilise donc un module qui permet donc de cliquer sur des boutons. Pour se placer à chaque fois dans les configurations où l'on a accès aux données dans le code HTML. On utilise alors un Parser pour récupérer les données brutes
 
-Dans le cadre de la lecture d'un Graphe, il est nécessaire de pouvoir passer la souris au dessus de la courbe pour avoir accès aux valeurs de prix à cet instant. Encore une fois dans le cas contraire ces données ne sont pas accesible dans le code de la page. On fait donc bouger la souris d'un pas suffisament petit pour passer au dessus de tous les points du graphique. 
+  Dans le cadre de la lecture d'un Graphe, il est nécessaire de pouvoir passer la souris au dessus de la courbe pour avoir accès aux valeurs de prix à cet instant. Encore une fois dans le cas contraire ces données ne sont pas accesible dans le code de la page. On fait donc bouger la souris d'un pas suffisament petit pour passer au dessus de tous les points du graphique. 
 
 Le Package en lui-même est composé de 3 sous-modules :
 

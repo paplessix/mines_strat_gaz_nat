@@ -3,17 +3,20 @@ Module that assures the optimization of the evolution attribute of a Gaz Storage
 represented by a Stockage object
 """
 
-import pandas as pd
-import numpy as np 
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize
-import scipy
 import datetime
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy
+from scipy.optimize import minimize
+
 from matrices import Matrices
+
 
 ##### Fonction de Cout #####
 def profit(X,prices) : 
-        return sum([vol * price for vol,price in zip(X,prices)])
+        return np.sum(X*prices)
 
 class Optimizer :
     """ Class that handles the optimization of the storage utilisation
