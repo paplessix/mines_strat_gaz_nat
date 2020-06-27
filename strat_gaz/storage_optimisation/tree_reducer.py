@@ -166,7 +166,7 @@ class Scenario_builder():
             index = index.difference(J)
             if len(index) <= 1 :
                 break
-
+                
     def nx_graph_builder(self):
         G = nx.DiGraph()
         n, m = self.tree.shape
