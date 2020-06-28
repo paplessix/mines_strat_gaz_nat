@@ -16,14 +16,14 @@ def filename2(stockage, size, v_init, index):
     return str(stockage) + '_' + str(size) + '_' + str(v_init) + '__' + str(index) + '_o.csv'
 
 #### My simulations parameters
-INDEX = 'YOU'
+INDEX = 'SEB'
 SIZE = 100
 V_INIT = 40
 STOCKAGE = 'SedN'
-INPUT_PATH = Path(__file__).parent.parent / 'Data' / 'Diffusion' /'Diffusion_model_dynamic_forward_1000_YOU.csv'
+INPUT_PATH = Path(__file__).parent.parent / 'Data' / 'Diffusion' /'Diffusion_model_dynamic_forward_1000_SEB.csv'
 OUTPUT_PATH = Path(__file__).parent / 'results' 
 
-N_EXECUTIONS = 50
+N_EXECUTIONS = 141
 
 def list_csv_dir(directory : str):
     """
