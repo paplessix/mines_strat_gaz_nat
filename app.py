@@ -14,7 +14,10 @@ app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheet
 
 spot_history_df = pd.read_csv('strat_gaz/scrap/last_save/spot_€_MWh_PEG.csv')
 forward_history_df = pd.read_csv('strat_gaz/scrap/last_save/forward_€_MWh_PEG.csv')
-scenario_df = pd.read_csv('strat_gaz/Data/Diffusion_model.csv')
+scenario_df = pd.read_csv('strat_gaz/Data/Diffusion/Diffusion_model_dynamic_forward_1000.csv')
+strat_df = pd.read_csv('strat_gaz/storage_optimisation/results/SedN_100_40__PA_o.csv')
+
+#https://stackoverflow.com/questions/45577255/plotly-plot-multiple-figures-as-subplots
 
 header = html.Div(
     children = 'Mines strat gaz nat',
@@ -42,22 +45,7 @@ body_layout = html.Div([
 
         dcc.Graph(
             id='scenario',
-            config = {'displayModeBar': False},
-            figure = Figure(
-                data = Scatter(
-                    x = scenario_df.columns,
-                    y = scenario_df.iloc[47],
-                    marker=dict(
-                        color='#FF686B'
-                    )
-                ),
-                layout = Layout(
-                    paper_bgcolor='rgb(0, 0, 0, 0)',
-                    plot_bgcolor='#f2f2f2',
-                    transition = {'duration': 500},
-                    title = 'Un scénario de diffusion de prix'
-                )
-            )
+            config = {'displayModeBar': False}
         ),
 
         #Collapse pour montrer/cacher les infos de volatilité
@@ -163,7 +151,7 @@ def update_figure(selected):
     return Figure(data = data, layout = lo)
 
 
-#Callback sur la jauge du forward
+#Callback sur le calendrier du forward
 @app.callback(
     Output('historical-forward', 'figure'),
     [Input('date-picker-forward', 'date')])
@@ -182,26 +170,71 @@ def update_figure(selected_date):
     )
     return Figure(data = data, layout = lo)
 
-# y = forward_history_df.loc[forward_history_df['Trading Day'] == str(selected_date)[:10]][['Month+1', 'Month+2', 'Month+3', 'Month+4']]
 
 #Callback génération scénario
 @app.callback(
     Output('scenario', 'figure'),
     [Input("random-button", "n_clicks")])
 def update_scenario(n):
-    data = Scatter(
-        x = scenario_df.columns,
-        y = scenario_df.iloc[rd.randint(0, 99)],
-        marker=dict(
-            color='#FF686B'
+    k = rd.randint(4, len(strat_df) - 1)
+    figure = Figure(
+        data = [Scatter(
+            x = scenario_df.columns,
+            y = scenario_df.iloc[k-4],
+            name = 'Prix',
+            marker=dict(
+                color='#ff4000'
+            ),
+            visible = 'legendonly'
+        ),
+        Scatter(
+            x = strat_df.columns[1:],
+            y = strat_df.iloc[k][1:],
+            name = 'Volume',
+            marker = dict(
+                color = '#00bfff'
+            ),
+            yaxis = 'y2'
+        ),
+        Scatter(
+            x = strat_df.columns[1:],
+            y = strat_df.iloc[0][1:],
+            name = 'Tunnel min',
+            marker = dict(
+                color = 'rgb(30, 200, 30)'
+            ),
+            yaxis = 'y2',
+            visible = 'legendonly'
+        )],
+
+        layout = Layout(
+            paper_bgcolor='rgb(242, 242, 242, 0)',
+            plot_bgcolor='#f2f2f2',
+            transition = {'duration': 500},
+            yaxis=dict(
+                title='Prix $/MWh' + str(k),
+                titlefont=dict(
+                    color='#ff4000'
+                ),
+                tickfont=dict(
+                    color='#ff4000'
+                )
+            ),
+            yaxis2 = dict(
+                title='Volume MWh',
+                overlaying = 'y',
+                side = 'right',
+                titlefont=dict(
+                    color='#00bfff'
+                ),
+                tickfont=dict(
+                    color='#00bfff'
+                )
+            ),
+            title = 'Scénario de diffusion de prix'
         )
     )
-    lo = Layout(
-        paper_bgcolor='rgb(0, 0, 0, 0)',
-        plot_bgcolor='#f2f2f2',
-        title = 'Un scénario de diffusion de prix'
-    )
-    return Figure(data = data, layout = lo)
+    return figure
 
 
 #Callback sur le collapse de la volatilité

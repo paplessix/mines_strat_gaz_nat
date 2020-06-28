@@ -13,3 +13,7 @@ body{
 th {
     font-weight: normal
 }
+
+#tab-1:hover {
+    cursor: pointer;
+}
