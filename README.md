@@ -168,4 +168,17 @@ Un Benchmark montre que le cout de calcul augmente fortement plus les périodes 
 ### Distribution du calcul
 
 ## Partie 4 : WebApp 
-------------------
+
+Pour héberger localement la WebApp, il suffit d'entrer dans un terminal la commande 
+```
+python app.py
+```
+La WebApp est alors accessible à l'adresse http://127.0.0.1:8050 
+Elle est subdivisée en composants présentant les résultats des différents modules.
+
+### Composant 1: Données historiques
+
+Ce composant contient les données récupérées par le module de WebScraping. Deux onglets sont disponibles: un pour les prix spots historiques, l'autre pour les prix forward historiques.
+
+### Composant 2: Scénarii de diffusion de prix et optimisation
+Ce composant propose de tracer plusieurs séries temporelles correspondant aux résultats des modules de diffusion de prix et d'optimisation du stockage.
