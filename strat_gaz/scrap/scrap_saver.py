@@ -9,8 +9,8 @@ import sys
 
 import pandas as pd
 
-from scrap.graph_scraper import Browser as Browser_spot
-from scrap.table_scraper import Browser as Browser_forward
+from strat_gaz.scrap.graph_scraper import Browser as Browser_spot
+from strat_gaz.scrap.table_scraper import Browser as Browser_forward
 
 
 def filename_constructor(directory, info, active, price_type):
@@ -110,13 +110,13 @@ def main():
     else:
         directory = args.directory
 
-    if args.product == 'spot':
+    if args.product.lower() == 'spot':
         data_updater(directory, 'spot', args.specific)
-    elif args.product == 'forward':
+    elif args.product.lower() == 'forward':
         data_updater(directory, 'forward', args.specific)
     else:
-        data_updater('./scrap/last_save', 'forward', args.specific)
-        data_updater('./scrap/last_save', 'spot', args. specific)
+        data_updater('./strat_gaz/scrap/last_save', 'forward', args.specific)
+        data_updater('./strat_gaz/scrap/last_save', 'spot', args. specific)
 
 
 if __name__ == '__main__':

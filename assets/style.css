@@ -1,0 +1,19 @@
+body{
+    background-color: #f2f2f2
+}
+
+.pretty-border {
+    border-radius: 5px;
+    margin: 10px;
+    background-color: white;
+    padding: 15px;
+    box-shadow: 2px 2px 2px lightgrey;
+  }
+
+th {
+    font-weight: normal
+}
+
+#tab-1:hover {
+    cursor: pointer;
+}

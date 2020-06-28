@@ -3,17 +3,20 @@ Module that assures the optimization of the evolution attribute of a Gaz Storage
 represented by a Stockage object
 """
 
-import pandas as pd
-import numpy as np 
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize
-import scipy
 import datetime
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy
+from scipy.optimize import minimize
+
 from matrices import Matrices
+
 
 ##### Fonction de Cout #####
 def profit(X,prices) : 
-        return sum([vol * price for vol,price in zip(X,prices)])
+        return np.sum(X*prices)
 
 class Optimizer :
     """ Class that handles the optimization of the storage utilisation
@@ -62,9 +65,9 @@ class Optimizer :
         """
         # The evolution belongs to [-1,1]
         self.c1 = scipy.optimize.LinearConstraint(np.eye(self.stock.N),-1,1)
-        # self.c3 = scipy.optimize.LinearConstraint(self.stock.Vmax*self.m.triang_inf,
-        #                                         self.stock.vect_min - self.initial_vect, 
-        #                                         self.stock.vect_max - self.initial_vect)
+        self.c3 = scipy.optimize.LinearConstraint(self.stock.Vmax*self.m.triang_inf,
+                                                 self.stock.vect_min - self.initial_vect, 
+                                                 self.stock.vect_max - self.initial_vect)
 
         # Injection / racking constraints
         self.c4 = scipy.optimize.NonlinearConstraint(lambda x : self.con_max_sout(x),0, np.inf)
@@ -83,5 +86,6 @@ class Optimizer :
         Return :
             - None
         """
-        res = minimize(lambda x:profit(self.stock.Vmax*x, self.prices), self.X_0 ,method='SLSQP', constraints = [self.c1,self.c4,self.c5, self.c6, self.c7], options={'disp' : True, 'ftol': 1e-1})
+        res = minimize(lambda x:profit(self.stock.Vmax*x, self.prices), self.X_0 ,method='SLSQP', constraints = [self.c1,self.c3, self.c4, self.c5, self.c6, self.c7], options={'ftol':1 , 'disp' : True})
         self.stock.evolution = res.x
+#self.c1,self.c4,self.c5, self.c6, self.c7

@@ -29,7 +29,10 @@ class Scenario_builder():
         tree = tree_with_head[1:,:-1]
         self.tree = tree
         self.tree_prob  = np.ones(self.n_scen)/self.n_scen
-        plt.plot(self.tree, color = 'b')
+        plt.plot(self.tree)
+        plt.xlabel('nombre d étapes')
+        plt.ylabel('Prix en euro')
+        plt.title('Arbres de scénarios')
         plt.show()
 
 
@@ -120,7 +123,10 @@ class Scenario_builder():
         print(a-b)
 
     def plot_tree(self):
-        plt.plot(self.tree, color = 'r')
+        plt.plot(self.tree)
+        plt.xlabel('nombre d étapes')
+        plt.ylabel('Prix en euro')
+        plt.title('Arbres de scénarios')
         plt.show()
 
     def scenario_tree_construction(self,epsilon):
@@ -160,7 +166,7 @@ class Scenario_builder():
             index = index.difference(J)
             if len(index) <= 1 :
                 break
-
+                
     def nx_graph_builder(self):
         G = nx.DiGraph()
         n, m = self.tree.shape

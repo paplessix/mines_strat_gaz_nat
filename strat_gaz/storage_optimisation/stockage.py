@@ -34,21 +34,21 @@ class Stockage():
         self.m = Matrices(self.N)
         self.type = "generique"
 
-        # Capacités de soutirage - ici Générique
+        # Capacités de soutirage - ici Générique Sediane Nord 20
         self.D_nom_sout = 44
         Y_0 = [0,0.4]
         Y_1 = [0.17, 0.65]
         Y_2 = [1,1]
         self.sout_list = [Y_0,Y_1,Y_2]
 
-        # Capacités d'injection - ici Générique
+        # Capacités d'injection - ici Générique Sediane nord 20
         self.D_nom_inj  = 85 
         X_0 = [0,1]
         X_1 = [0.6, 1]
         X_2 = [1,0.43]
         self.inj_list = [X_0,X_1,X_2]
 
-        # Contraintes de remplissage - ici Générique 
+        # Contraintes de remplissage - ici Générique  Sediane nord 20
         self.months_con = {'04' : [0,0.4],'06' :[0.2,0.65],
                                     '08': [0.5,0.9],'09' : [0,0.95],
                                     '11':[0.85,1]}
