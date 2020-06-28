@@ -23,7 +23,7 @@ STOCKAGE = 'SedN'
 INPUT_PATH = Path(__file__).parent.parent / 'Data' / 'Diffusion' /'Diffusion_model_dynamic_forward_1000_YOU.csv'
 OUTPUT_PATH = Path(__file__).parent / 'results' 
 
-N_EXECUTIONS = 100
+N_EXECUTIONS = 50
 
 def list_csv_dir(directory : str):
     """
