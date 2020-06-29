@@ -1,6 +1,7 @@
 from NewDiffusion import DiffusionSpot
 import pandas as pd
 import numpy as np
+import argparse 
 
 path1 = '../scrap/last_save/spot_€_MWh_PEG.csv'
 path2 = '../scrap/last_save/forward_€_MWh_PEG.csv'
