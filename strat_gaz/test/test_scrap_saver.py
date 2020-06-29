@@ -1,4 +1,4 @@
-from scrap.scrap_saver import * 
+from strat_gaz.scrap.scrap_saver import * 
 ### filename constructor
 
 def test_price_type():

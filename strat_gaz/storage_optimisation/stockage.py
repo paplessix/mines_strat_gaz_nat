@@ -18,6 +18,8 @@ class Stockage():
     Class that implements the storage properties
     """
     def __init__(self, Vmax, Vinit, data, evolution, comp_tunnel = True):
+        if Vinit > Vmax or Vinit < 0 :
+            raise ValueError
         # Base parameters
         self.Vmax = Vmax
         self.Vinit = Vinit

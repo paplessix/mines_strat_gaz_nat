@@ -1,4 +1,4 @@
-from storage_optimisation.tree_reducer import Scenario_builder
+from strat_gaz.storage_optimisation.tree_reducer import Scenario_builder
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -21,7 +21,7 @@ def test_builder() :
 
 def test_data_loader():
     scen = Scenario_builder()
-    scen.data_loader(csv_path)
+    scen.data_loader_csv(csv_path)
     try :   
         scen.tree
     except AttributeError:
@@ -33,14 +33,14 @@ def test_data_loader():
 
 def test_dist_sym():
     scen = Scenario_builder()
-    scen.data_loader(csv_path_duo)
+    scen.data_loader_csv(csv_path_duo)
     assert scen.distance_scen_pair(0,1, scen.T) == scen.distance_scen_pair(1,0,scen.T)
 
 # Vérification de la somme
 
 def test_dist_T_max():
     scen = Scenario_builder()
-    scen.data_loader(csv_path_duo)
+    scen.data_loader_csv(csv_path_duo)
     for i in range(scen.T):
         assert scen.distance_scen_pair(0,1,i)== i
 
@@ -48,7 +48,7 @@ def test_dist_T_max():
 
 def test_sym_mat_dist():
     scen = Scenario_builder()
-    scen.data_loader(csv_path)
+    scen.data_loader_csv(csv_path)
     for i in range(scen.T):
         mat = scen.mat_distance_scen(i)
         assert scen.C_K_J.all() == scen.C_K_J.transpose().all() 
