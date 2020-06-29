@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from matrices import Matrices
+from strat_gaz.storage_optimisation.matrices import Matrices
 
 
 class Stockage():

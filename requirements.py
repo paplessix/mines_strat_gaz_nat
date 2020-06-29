@@ -7,3 +7,5 @@ networkx
 setuptools
 lxml    
 sklearn
+dash
+dash-bootstraps-components
