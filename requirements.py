@@ -7,5 +7,6 @@ networkx
 setuptools
 lxml    
 sklearn
+plotly
 dash
-dash-bootstraps-components
+dash-bootstrap-components
