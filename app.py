@@ -5,8 +5,11 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from plotly.graph_objs import *
+import numpy as np
 import pandas as pd
 import random as rd
+from strat_gaz.storage_optimisation.matrices import Matrices
+
 
 external_stylesheets = []
 
@@ -15,7 +18,7 @@ app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheet
 spot_history_df = pd.read_csv('strat_gaz/scrap/last_save/spot_€_MWh_PEG.csv')
 forward_history_df = pd.read_csv('strat_gaz/scrap/last_save/forward_€_MWh_PEG.csv')
 scenario_df = pd.read_csv('strat_gaz/Data/Diffusion/Diffusion_model_dynamic_forward_1000.csv')
-strat_df = pd.read_csv('strat_gaz/storage_optimisation/results/SedN_100_40__PA_o.csv')
+strat_df = pd.read_csv('strat_gaz/storage_optimisation/results/SedN_100_40_o.csv')
 
 #https://stackoverflow.com/questions/45577255/plotly-plot-multiple-figures-as-subplots
 
@@ -177,22 +180,24 @@ def update_figure(selected_date):
     [Input("random-button", "n_clicks")])
 def update_scenario(n):
     k = rd.randint(4, len(strat_df) - 1)
+    v_relatif = strat_df.iloc[k][1:].to_numpy()
+    m = Matrices(len(v_relatif))
+    volume = np.dot(m.triang_inf, v_relatif) + 0.4*np.ones_like(v_relatif)
     figure = Figure(
         data = [Scatter(
             x = scenario_df.columns,
             y = scenario_df.iloc[k-4],
             name = 'Prix',
             marker=dict(
-                color='#ff4000'
-            ),
-            visible = 'legendonly'
+                color='#636efa'
+            )
         ),
         Scatter(
             x = strat_df.columns[1:],
-            y = strat_df.iloc[k][1:],
+            y = volume,
             name = 'Volume',
             marker = dict(
-                color = '#00bfff'
+                color = 'rgb(30, 230, 30)'
             ),
             yaxis = 'y2'
         ),
@@ -201,7 +206,17 @@ def update_scenario(n):
             y = strat_df.iloc[0][1:],
             name = 'Tunnel min',
             marker = dict(
-                color = 'rgb(30, 200, 30)'
+                color = 'rgb(240, 60, 60)'
+            ),
+            yaxis = 'y2',
+            visible = 'legendonly'
+        ),
+        Scatter(
+            x = strat_df.columns[1:],
+            y = strat_df.iloc[1][1:],
+            name = 'Tunnel max',
+            marker = dict(
+                color = 'rgb(240, 60, 60)'
             ),
             yaxis = 'y2',
             visible = 'legendonly'
@@ -212,23 +227,23 @@ def update_scenario(n):
             plot_bgcolor='#f2f2f2',
             transition = {'duration': 500},
             yaxis=dict(
-                title='Prix $/MWh' + str(k),
+                title='Prix €/MWh',
                 titlefont=dict(
-                    color='#ff4000'
+                    color='#636efa'
                 ),
                 tickfont=dict(
-                    color='#ff4000'
+                    color='#636efa'
                 )
             ),
             yaxis2 = dict(
-                title='Volume MWh',
+                title='Volume normalisé',
                 overlaying = 'y',
                 side = 'right',
                 titlefont=dict(
-                    color='#00bfff'
+                    color='rgb(30, 230, 30)'
                 ),
                 tickfont=dict(
-                    color='#00bfff'
+                    color='rgb(30, 230, 30)'
                 )
             ),
             title = 'Scénario de diffusion de prix'
