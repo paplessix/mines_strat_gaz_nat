@@ -19,15 +19,16 @@ spot_history_df = pd.read_csv('strat_gaz/scrap/last_save/spot_€_MWh_PEG.csv')
 forward_history_df = pd.read_csv('strat_gaz/scrap/last_save/forward_€_MWh_PEG.csv')
 scenario_df = pd.read_csv('strat_gaz/Data/Diffusion/Diffusion_model_dynamic_forward_1000.csv')
 strat_df = pd.read_csv('strat_gaz/storage_optimisation/results/SedN_100_40_o.csv')
+profit_df = pd.read_csv('strat_gaz/storage_optimisation/results/SedN_100_40.csv')
 
-#https://stackoverflow.com/questions/45577255/plotly-plot-multiple-figures-as-subplots
+k = 100
 
 header = html.Div(
     children = 'Mines strat gaz nat',
     className = 'row pretty-border'
 )
 
-body_layout = html.Div([
+first_row_layout = html.Div([
 
     # Composant données historiques
     html.Div([
@@ -59,28 +60,41 @@ body_layout = html.Div([
             color="primary"
         ),
         dbc.Button(
-            "Détails",
-            id="collapse-button",
-            className="mb-3",
-            color="light"
-        ),
-        dbc.Collapse(
-            dbc.Table(
-                html.Tbody([
-                    html.Tr([html.Th(" "), html.Th("Hiver"), html.Th("Ete")]),
-                    html.Tr([html.Th("Semaine"), html.Th("26%"), html.Th("35%")]),
-                    html.Tr([html.Th("Week-end"), html.Th("13%"), html.Th("17%")])
-                ]),
-                bordered = True
+                "Détails",
+                id="collapse-button",
+                className="mb-3",
+                color="light"
             ),
-            id = 'collapse'
-        )
+            dbc.Collapse(
+                dbc.Table(
+                    html.Tbody([
+                        html.Tr([html.Th(" "), html.Th("Hiver"), html.Th("Ete")]),
+                        html.Tr([html.Th("Semaine"), html.Th("26%"), html.Th("35%")]),
+                        html.Tr([html.Th("Week-end"), html.Th("13%"), html.Th("17%")])
+                    ]),
+                    bordered = True
+                ),
+                id = 'collapse'
+            )
     ], className = 'col-sm scenar pretty-border text-center')
 
 ], className = 'row')
 
+
+second_row_layout = html.Div([
+    html.Div('', className = 'col-1'),
+    html.Div([
+        dcc.Graph(
+            id = 'profit-boxplot',
+            config = {'displayModeBar': False},
+        )
+    ], className = 'col-sm pretty-border text-center'),
+    html.Div('', className = 'col-1'),
+], className = 'row')
+
+
 app.layout = html.Div(
-    children = [header, body_layout],
+    children = [header, first_row_layout, second_row_layout],
     className = 'container-fluid'
 )
 
@@ -176,14 +190,15 @@ def update_figure(selected_date):
 
 #Callback génération scénario
 @app.callback(
-    Output('scenario', 'figure'),
+    [Output('scenario', 'figure'),
+    Output('profit-boxplot', 'figure')],
     [Input("random-button", "n_clicks")])
 def update_scenario(n):
     k = rd.randint(4, len(strat_df) - 1)
     v_relatif = strat_df.iloc[k][1:].to_numpy()
     m = Matrices(len(v_relatif))
     volume = np.dot(m.triang_inf, v_relatif) + 0.4*np.ones_like(v_relatif)
-    figure = Figure(
+    figure_scenar = Figure(
         data = [Scatter(
             x = scenario_df.columns,
             y = scenario_df.iloc[k-4],
@@ -249,7 +264,35 @@ def update_scenario(n):
             title = 'Scénario de diffusion de prix'
         )
     )
-    return figure
+    figure_profit = Figure(
+        data = Box(
+            y = profit_df['profit'],
+            boxpoints = 'all',
+            jitter = 0.4,
+            pointpos=-2,
+            name = ' ',
+            selectedpoints = [k-4],
+            selected = dict(
+                marker = dict(
+                    color = 'rgb(30, 230, 30)',
+                    opacity = 1,
+                    size = 20
+                )
+            ),
+            unselected = dict(
+                marker = dict(
+                    opacity = 1,
+                    size = 3
+                )
+            ),
+            hoverinfo = 'y'
+        ),
+        layout = Layout(
+            title = 'Profits générés',
+            yaxis = dict(title = ' Profit €')
+        )
+    )
+    return figure_scenar, figure_profit
 
 
 #Callback sur le collapse de la volatilité
