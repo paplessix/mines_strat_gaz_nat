@@ -466,12 +466,14 @@ class DiffusionSpot:
         if self.forward_diffusion:
             curve = [self.forward_curve[i*4//len(tab[0])] for i in range(len(tab[0]))]
             ax2.plot(dates, curve, label='Prix forward', lw=2)
+            ax2.set_title('Forward fixe')
         else:
             curve = means
-            ax2.plot(dates, curve, label='Long Term Mean with variation', lw=2)
+            ax2.plot(dates, curve, label='Long term mean with variation', lw=2)
+            ax2.set_title('Comparing means')
         ax2.plot(dates, moyenne, lw=2, label='Mean of diffusion scenarios')
         ax2.set_ylabel('€/MWh')
-        ax2.legend(loc='upper left')
+        ax2.legend(loc='upper right')
         plt.show()
 
 
@@ -546,42 +548,3 @@ class DiffusionSpot:
             if element.weekday() > 4:
                 self._weekends = True
         return self._weekends
-
-
-
-
-    
-    # THIS FUNCTION NEEDS TO BE CHANGED
-    # def one_iteration(self, start_date:str, end_date:str, simul_date:str, spot_price = None):
-    #     '''
-    #     Input dates for estimation of parameters and date of simulation, will return a future spot price (one iteration of pilipovic process) based 
-    #     on forward curve and estimated volatilities. Date in %Y-%m-%d. 
-    #     If spot price not provided, will just take the spot_price at end day as the current spot price based upon which
-    #     next step is calculated.
-    #     '''
-    #     df = self.selecting_dataframe(start_date, end_date)
-    #     self.vol_sum = self.volatility(start_date, end_date, summer=True)
-    #     self.vol_win = self.volatility(start_date, end_date, winter=True)
-    #     if self.vol_sum == 0:  #if we don't have enough data we might encounter a problem with volatility estimation
-    #         self.vol_sum = self.vol_win
-    #     elif self.vol_win == 0:
-    #         self.vol_win = self.vol_sum
-    #     self.mean_reversion_sum = self.mean_reversion(start_date, end_date, summer=True)
-    #     self.mean_reversion_win = self.mean_reversion(start_date, end_date, summer=False)
-    #     if self.mean_reversion_sum == 0:
-    #         self.mean_reversion_sum = self.mean_reversion_win
-    #     elif self.mean_reversion_win == 0:
-    #         self.mean_reversion_sum = self.mean_reversion_sum
-    #     forward_curve = self.fetch_forward(end_date)
-    #     mean = forward_curve[int(simul_date.split('-')[1]) - int(end_date.split('-')[1])]
-    #     if simul_date.split('-')[1] in self.summer_months:
-    #         sigma = self.vol_sum
-    #         alpha = self.mean_reversion_sum
-    #     else:
-    #         sigma = self.vol_win
-    #         alpha = self.mean_reversion_win
-    #     if not spot_price:
-    #         G_0 = df['Price'].to_list()[-1]
-    #     else:
-    #         G_0 = spot_price
-    #     return float(alpha*(mean - G_0) + sigma*np.random.randn() + G_0)
