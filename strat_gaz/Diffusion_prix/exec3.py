@@ -8,7 +8,7 @@ path1 = '../scrap/last_save/spot_€_MWh_PEG.csv'
 path2 = '../scrap/last_save/forward_€_MWh_PEG.csv'
 
 diff = DiffusionSpot(path1, path2)
-start_date_long, start_date = '', '2020-02-17'   #Due to non availability of data on a longer time scale.
+start_date_long, start_date = '', '2020-02-17'#Due to nonavailability of data on longer time scale.
 end_date_long, end_date = '', '2020-06-11'
 end_date_sim = '2021-06-11'
 
@@ -16,7 +16,8 @@ end_date_sim = '2021-06-11'
 Forward_curve, Spot_curve = [], []
 number_of_scenarios = 1000
 for i in range(number_of_scenarios):
-    F, S = diff.pilipovic_dynamic_forward_simple(start_date_long, end_date_long, start_date, end_date, end_date_sim)
+    F, S = diff.pilipovic_dynamic_forward_simple(start_date_long, end_date_long,
+                                                 start_date, end_date, end_date_sim)
     Forward_curve.append(F)
     Spot_curve.append(S)
 
@@ -39,7 +40,10 @@ df = pd.DataFrame(data=Spot_curve, columns = columns, index=rows)
 df.to_csv('../Data/Diffusion/Diffusion_model_dynamic_forward_1000')
 
 #One forward diffusion and multiple spot diffusions
-Forward_curve2, Spot_curve2 = diff.pilipovic_dynamic_forward_multiple(start_date_long, end_date_long, start_date, end_date, end_date_sim, m = 2)
+Forward_curve2, Spot_curve2 = diff.pilipovic_dynamic_forward_multiple(start_date_long,
+                                                                      end_date_long, start_date,
+                                                                      end_date, end_date_sim,
+                                                                      m = 2)
 fig2, ax2 = plt.subplots()
 ax2.xaxis_date()
 fig2.autofmt_xdate()

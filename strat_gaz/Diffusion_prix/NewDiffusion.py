@@ -1,17 +1,19 @@
-import numpy as np
-import scipy
-import math
-import pandas as pd
+from datetime import timedelta, date, datetime
 from sklearn import model_selection, metrics
 from sklearn.ensemble import RandomForestRegressor
-import matplotlib.pyplot as plt
-from datetime import timedelta, date, datetime
-import matplotlib.dates as mdates
 from dateutil.relativedelta import relativedelta, MO
+import numpy as np
+import scipy
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 
 class DiffusionSpot:
-
+    """
+    DiffusionSpot class is built for producing price diffusions with various methods.
+    For an in-depth explanation see github wiki paplessix/mines_strat_gaz_nat
+    """
     def __init__(self, path1: str, path2: str, skip=[], summer_months=[4, 5, 6, 7, 8, 9],
                  winter_months=[10, 11, 12, 1, 2, 3], forward_diffusion=True):
         '''
@@ -44,7 +46,7 @@ class DiffusionSpot:
     def selecting_dataframe(self, start_date: str, end_date: str, spot=True, summer=False,
                             winter=False, remove_weekends=False):
         '''
-        Function to select the appropriate dataframe from the original one. 
+        Function to select the appropriate dataframe from the original one.
         Inputs:
         Start and end date in between which he wishes to extract data. Date  %Y-%m-%d format.
         User can also input an optional summer or winter parameter which will extract data solely
@@ -91,7 +93,7 @@ class DiffusionSpot:
                                       winter=winter, remove_weekends=remove_weekends)
         price = np.array(df['Price'])
         spot_mean = price.mean()
-        if len(price)!=0:
+        if len(price) != 0:
             series = np.array([np.log(price[i]/price[i-1]) for i in range(1, len(price))])
             mean = series.mean()
             series = (series - mean)**2
@@ -100,7 +102,7 @@ class DiffusionSpot:
                 if mean_include:
                     return np.sqrt(variance), spot_mean
                 else:
-                    return np.sqrt(variance) 
+                    return np.sqrt(variance)
             else:
                 if mean_include:
                     return np.sqrt(variance)*np.sqrt(len(price)), spot_mean
@@ -116,17 +118,16 @@ class DiffusionSpot:
         In our case we are working with webscraped format  i.e 4 times to maturity.
         For other format, pre formatting will be necessary.
         '''
-        df = self.selecting_dataframe(start_date, end_date, summer = summer,
-                                      winter = winter, spot = False)
+        df = self.selecting_dataframe(start_date, end_date, summer=summer,
+                                      winter=winter, spot=False)
         price = np.array(df[['Month+1', 'Month+2', 'Month+3', 'Month+4']])
         series = np.array([np.array([np.log(price[i, j]/price[i-1, j]) for
-                           i in range(1, len(price))]) for j in range(4)])
+                                     i in range(1, len(price))]) for j in range(4)])
         means = np.array([[series[i].mean() for k in range(len(series[0]))] for
-                           i in range(len(series))])
+                          i in range(len(series))])
         series = (series - means)**2
         variances = np.array([(1/(len(price)-1))*sum(series[i]) for i in range(len(series))])
         return np.array([np.sqrt(variances[i])*np.sqrt(len(price)) for i in range(len(variances))])
-        
 
     def illustrating_mean_reversion(self, start_date: str, end_date: str, summer=False,
                                     winter=False):
@@ -140,15 +141,15 @@ class DiffusionSpot:
         df = self.selecting_dataframe(start_date, end_date, summer=summer, winter=winter)
         price = np.array(df['Price'])
         Y = [price[i] - price[i-1] for i in range(1, len(price))]
-        plt.scatter(price[:-1], Y, color='r', marker='o' )
+        plt.scatter(price[:-1], Y, color='r', marker='o')
         plt.legend('G_{t+1} - G_{t} = Y against G{t} = X')
         plt.scatter(price[1:], price[:-1], color='b', marker='x')
         plt.legend('G_{t+1} = Y against G{t] = X')
         plt.show()
         slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y)
-        return slope, intercept, r_value, p_value, std_err 
+        return slope, intercept, r_value, p_value, std_err
 
-    def mean_reversion(self, start_date: str, end_date: str, summer=False, winter=False, 
+    def mean_reversion(self, start_date: str, end_date: str, summer=False, winter=False,
                        allparams=False, spot=True, remove_weekends=False):
         '''
         Inputs - dates and summer, winter as selecting_dataframe
@@ -158,7 +159,7 @@ class DiffusionSpot:
         df = self.selecting_dataframe(start_date, end_date, True, summer=summer,
                                       winter=winter, remove_weekends=remove_weekends)
         price = np.array(df['Price'])
-        if len(price)!=0:
+        if len(price) != 0:
             Y = np.array([price[i] - price[i-1] for i in range(1, len(price))])
             slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(price[:-1], Y)
             if allparams:
@@ -166,10 +167,9 @@ class DiffusionSpot:
             else:
                 return abs(slope)
         else:
-            return 0  #if df to estimate mean_reversion parameter does not have data 
-    
+            return 0  #if df to estimate mean_reversion parameter does not have data
 
-    def forward_mean_reversion(self, start_date: str,end_date: str, summer=False, winter=False):
+    def forward_mean_reversion(self, start_date: str, end_date: str, summer=False, winter=False):
         '''
         Same principle as for forward volatilities.
         Outputs 4 mean_reversion parameters and 4 historical means
@@ -177,9 +177,9 @@ class DiffusionSpot:
         df = self.selecting_dataframe(start_date, end_date, summer=summer,
                                       winter=winter, spot=False)
         price = np.array([np.array(df['Month+1']), np.array(df['Month+2']),
-                            np.array(df['Month+3']), np.array(df['Month+4'])])
+                          np.array(df['Month+3']), np.array(df['Month+4'])])
         Y = [np.array([element[i] - element[i-1] for i in range(1, len(price[0]))]) for
-            element in price]
+             element in price]
         regress = [abs(scipy.stats.linregress(price[i][:-1], Y[i]).slope) for i in range(len(Y))]
         means = np.array([price[i].mean() for i in range(len(price))])
         return regress, means
@@ -196,7 +196,7 @@ class DiffusionSpot:
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         if start_date.weekday() <= 4:
             upcoming_months = df.loc[df['Day'] == start_date,
-                                        ['Month+1', 'Month+2', 'Month+3', 'Month+4']]
+                                     ['Month+1', 'Month+2', 'Month+3', 'Month+4']]
             return np.array(upcoming_months.values)[0]
         else:
             raise ValueError("The given start_date is a week-end.\
@@ -215,9 +215,9 @@ class DiffusionSpot:
             next_date = start_date + timedelta(n)
             if remove_weekends or not self.weekends:
                 if next_date.weekday() <= 4:
-                    dates.append(next_date)  
-            else: 
-                dates.append(next_date)  
+                    dates.append(next_date)
+            else:
+                dates.append(next_date)
         return dates
 
     def date_without_weekends(self, start_date, n):
@@ -259,18 +259,16 @@ class DiffusionSpot:
         '''
         dates = self.daterange(start_date_sim, end_date_sim, remove_weekends=remove_weekends)
         self.vol_sum = self.volatility(start_date, end_date, summer=True,
-                                        remove_weekends=remove_weekends, mean_include=False)
+                                       remove_weekends=remove_weekends, mean_include=False)
         self.vol_win = self.volatility(start_date, end_date, winter=True,
-                                        remove_weekends=remove_weekends, mean_include=False)
+                                       remove_weekends=remove_weekends, mean_include=False)
         if self.vol_sum == 0:  #if we don't have enough data - problem with volatility estimation
             self.vol_sum = self.vol_win  #Passed as attributes to print them in our later scripts
         elif self.vol_win == 0:
             self.vol_win = self.vol_sum
         return np.array([self.vol_sum if (dates[i].month in self.summer_months) else
-                            self.vol_win for i in range(len(dates))])
-    
-    
-    
+                         self.vol_win for i in range(len(dates))])
+        
     def mean_reversion_range(self, start_date, end_date, start_date_sim, end_date_sim,
                              remove_weekends=False):
         '''
@@ -287,13 +285,12 @@ class DiffusionSpot:
         if self.mean_reversion_sum == 0:
             self.mean_reversion_sum = self.mean_reversion_win
         elif self.mean_reversion_win == 0:
-            self.mean_reversion_win = self.mean_reversion_sum   
+            self.mean_reversion_win = self.mean_reversion_sum
         return  np.array([self.mean_reversion_sum if (dates[i].month in self.summer_months) else
-                            self.mean_reversion_win for i in range(len(dates))])
-
+                          self.mean_reversion_win for i in range(len(dates))])
 
     def pilipovic_fixed_parameters(self, start_date_long: str, end_date_long: str, start_date: str,
-                                   end_date: str, end_date_sim:str, remove_weekends = False):
+                                   end_date: str, end_date_sim: str, remove_weekends=False):
         '''
         Calculating both short term (summer and winter) and long term volatility can be
         computationally intensive.
@@ -310,18 +307,18 @@ class DiffusionSpot:
         '''
         dates = self.daterange(end_date, end_date_sim, remove_weekends=remove_weekends)
         n = len(dates)
-        means = [] 
+        means = []
         volatilities = self.volatilities_range(start_date, end_date, end_date, end_date_sim,
-                                                remove_weekends=remove_weekends)
+                                               remove_weekends=remove_weekends)
         mean_reversions = self.mean_reversion_range(start_date, end_date, end_date, end_date_sim,
                                                     remove_weekends=remove_weekends)
         if self.forward_diffusion:
             self.forward_curve = self.fetch_forward(end_date)  #accessed by multiple functions
         else: #to avoid expensive computation if not necessary
             mean = np.mean(np.array(self.selecting_dataframe(start_date_long, end_date_long,
-                                                        remove_weekends=remove_weekends)['Price']))
+                                                             remove_weekends=remove_weekends)['Price']))
             self.long_term_vol = self.volatility(start_date_long, end_date_long, annualized=True,
-                                                    remove_weekends=remove_weekends)
+                                                 remove_weekends=remove_weekends)
             Brownian_motion = np.cumsum(np.random.randn(n))
             means = np.array([mean + self.long_term_vol*Brownian_motion[i] for i in range(n)])
         df = self.selecting_dataframe(end_date, end_date) #for start price of diffusion model
@@ -345,19 +342,19 @@ class DiffusionSpot:
         (wiener process).
         '''
         Spot_curve = [start_price]
-        Brownian_motion = np.random.randn(n) 
+        Brownian_motion = np.random.randn(n)
         if self.forward_diffusion: #diffusion autour de forward fixe
             for i in range(1, n):
                 forward = self.forward_curve[i*4//n] #problem if forward data format!=webscraped
                 G_k = Spot_curve[-1]
                 G_k1 = (mean_reversions[i]*(forward - G_k) + volatilities[i]*Brownian_motion[i]
-                + G_k) # N(0,1)
+                        + G_k) # N(0,1)
                 Spot_curve.append(G_k1)
         else: #diffusion autour d'une moyenne avec mouvement determiné par la volatilité long terme
             for i in range(1, n):
                  G_k = Spot_curve[-1]
                  G_k1 = (mean_reversions[i]*(means[i] - G_k) + volatilities[i]*Brownian_motion[i]
-                 + G_k)
+                         + G_k)
                  Spot_curve.append(G_k1)
         return Spot_curve
 
@@ -379,13 +376,13 @@ class DiffusionSpot:
         f_mean_reversions, f_means = self.forward_mean_reversion(start_date, end_date)
         s_volatilities, s_mean_reversion, s_means, n, start_price = \
         self.pilipovic_fixed_parameters(start_date_long, end_date_long, start_date, end_date,
-                                         end_date_sim, remove_weekends=True)
+                                        end_date_sim, remove_weekends=True)
         Forward_curve = [self.fetch_forward(end_date)[0]]
         Spot_curve = [start_price]
         for i in range(1, n):
             F_k = Forward_curve[-1]
             F_k1 = (f_mean_reversions[0]*(f_means[0] - F_k) + f_volatilities[0]*np.random.randn()
-            + F_k)
+                    + F_k)
             Forward_curve.append(F_k1)
             G_k = Spot_curve[-1]
             G_k1 = s_mean_reversion[i]*(F_k - G_k) + s_volatilities[i]*np.random.randn() + G_k
@@ -407,8 +404,9 @@ class DiffusionSpot:
         n = len(dates)
         Forward_curve = [[self.fetch_forward(end_date)[i]] for i in range(4)]
         Spot_curve = {dates[0] : self.multiple_price_scenarios(start_date_long, end_date_long,
-                      start_date, end_date, end_date_sim, m)[0]}  #For first step it's a normal 
-                                                                  #diffusion around fixed forward
+                                                               start_date, end_date, end_date_sim, m)[0]}
+                                                               #For first step it's a normal
+                                                               #diffusion around fixed forward
         for i in range(1, n):
             for k in range(4):
                 F = Forward_curve[k][-1]
@@ -418,11 +416,12 @@ class DiffusionSpot:
                 Spot = [Spot_curve[dates[i-1]][0][1]]  #We initialize all the diffusion model
                                     #with the second step of first previous spot diffusion model 
                 for y in range(1, n):
-                    current_date = self.date_without_weekends(dates[i], n)  
+                    current_date = self.date_without_weekends(dates[i], n)
                     #skipping week-ends as forwards not issued
-                    s_mean_reversion = (self.mean_reversion_sum if (current_date.month in self.summer_months) else self.mean_reversion_win)
+                    s_mean_reversion = (self.mean_reversion_sum if (current_date.month in self.summer_months)
+                                        else self.mean_reversion_win)
                     s_volatility = (self.vol_sum if (current_date.month in self.summer_months)
-                    else self.vol_win)
+                                    else self.vol_win)
                     G = Spot[-1]
                     G1 = s_mean_reversion*(Forward_curve[4*y//n][-1] - G) + s_volatility*np.random.randn() + G
                     Spot.append(G1)
@@ -430,22 +429,27 @@ class DiffusionSpot:
         return Forward_curve, Spot_curve
 
 
-    def multiple_price_scenarios(self, start_date_long:str, end_date_long:str, start_date:str, end_date:str, end_date_sim:str, n:int):
+    def multiple_price_scenarios(self, start_date_long: str, end_date_long: str, start_date: str,
+                                 end_date: str, end_date_sim: str, n: int):
         '''
-        Generates n number of spot price scenarios using a pilipovic process for the evolution 
+        Generates n number of spot price scenarios using a pilipovic process for the evolution
         dynamics of the spot price. Forward price is based on future curve at start_date.
-        Date format is %Y-%m-%d. Gives table with all spot curves and a curve of mean calculated 
+        Date format is %Y-%m-%d. Gives table with all spot curves and a curve of mean calculated
         over all spot curves.
         Input - dates as pilipovic_fixed_parameters. n integer for number of diffusion scenarios.
         Output - tab with n scenarios. Moyenne with mean of all diffusion scenarios. Mean depends
-        on self.forward_diffusion i.e whether we are diffusing aroud forward. If True then mean is []
-        else we are diffusing around historical mean in which case means represents this long term 
+        on self.forward_diffusion i.e whether we are diffusing aroud forward.
+        If True then mean is [].
+        Else we are diffusing around historical mean in which case means represents this long term
         historical mean on which a random walk with long term volatility was added.
         '''
         moyenne, tab = [], []
-        volatilities, mean_reversions, means, p, start_price = self.pilipovic_fixed_parameters(start_date_long, end_date_long, start_date, end_date, end_date_sim)
+        volatilities, mean_reversions, means, p, start_price = \
+        self.pilipovic_fixed_parameters(start_date_long, end_date_long, start_date,
+                                        end_date, end_date_sim)
         for _ in range(n):
-            tab.append(self.pilipovic_fixed_forward(volatilities, mean_reversions, means, p, start_price))
+            tab.append(self.pilipovic_fixed_forward(volatilities, mean_reversions,
+                                                    means, p, start_price))
         for i in range(len(tab[0])):
             moyenne.append(sum(tab[k][i] for k in range(len(tab)))/len(tab))
         return tab, moyenne, means, n
@@ -456,7 +460,7 @@ class DiffusionSpot:
         and forward prices associated.
         '''
         dates = self.dates
-        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10,5))
+        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
         ax1.xaxis_date()
         fig.autofmt_xdate()
         ax1.set_title(f'{n} Spot price scenarios')
@@ -477,23 +481,31 @@ class DiffusionSpot:
         plt.show()
 
 
-    def random_forest_dataset_spot(self, start_date, end_date, remove_weekends = False, test=False):
+    def random_forest_dataset_spot(self, start_date, end_date, remove_weekends=False,
+                                   test=False):
         '''
-        Input - start and end date for train and test of the random_forest regression algorithm. Test
-        is boolean, True for just testing on historical data, False for test AND training datasets.
-        Output - train and test datasets ready to be used by a random forest regression algorithm. 
-        Features are Date, means over the past 1 month, 2 months ... 6 months. Volatilities over 1, 2 ... 6 months.
+        Input - start and end date for train and test of the random_forest regression algorithm.
+        Test is boolean, True for just testing on historical data,
+        False for test AND training datasets.
+        Output - train and test datasets ready to be used by a random forest regression algorithm.
+        Features are Date, means over the past 1 month, 2 months ... 6 months.
+        Volatilities over 1, 2 ... 6 months.
         Mean reversion over 1, 2 ... 6 months.
         '''
-        df = self.selecting_dataframe(self.previous_date(start_date, 0), self.previous_date(end_date, 0), remove_weekends = remove_weekends) #This has spot prices and dates 
-        dates  = df['Day'].to_list()
+        df = self.selecting_dataframe(self.previous_date(start_date, 0),
+                                      self.previous_date(end_date, 0),
+                                      remove_weekends=remove_weekends) #Spot prices and dates
+        dates = df['Day'].to_list()
         means, vols, mean_revs = [], [], []
         for element in dates:  #Getting all the necessary features for our daterange
             element_mean, element_vol, element_mean_rev = [], [], []
             for i in range(1, 7):
                 prev_date = self.previous_date(element, i)
-                vol, m = self.volatility(prev_date, element.strftime('%Y-%m-%d'), remove_weekends = remove_weekends, mean_include = True)  #Get volatility, mean and mean_reversion
-                rev = self.mean_reversion(prev_date, element.strftime('%Y-%m-%d'), remove_weekends = remove_weekends) 
+                vol, m = self.volatility(prev_date, element.strftime('%Y-%m-%d'),
+                                         remove_weekends=remove_weekends,
+                                         mean_include=True)  #Volatility, mean and mean_reversion
+                rev = self.mean_reversion(prev_date, element.strftime('%Y-%m-%d'),
+                                          remove_weekends=remove_weekends)
                 element_vol.append(vol)
                 element_mean.append(m)
                 element_mean_rev.append(rev)
@@ -504,8 +516,7 @@ class DiffusionSpot:
             df[f'Mean {k} months'] = np.array([means[p][k-1] for p in range(len(means))])
             df[f'Vols {k} months'] = np.array([vols[p][k-1] for p in range(len(vols))])
             df[f'Mean_revs {k} months'] = np.array([mean_revs[p][k-1] for p in range(len(mean_revs))])
-        first_spot = self._dataset.loc[self._dataset['Day'] == self.previous_date(start_date, 0)]['Price']
-        X = np.array(df.drop(columns = ['Price', 'Day']))
+        X = np.array(df.drop(columns=['Price', 'Day']))
         y = np.array(df['Price'])
         if test:
             return X, y
@@ -513,29 +524,16 @@ class DiffusionSpot:
             X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.20, random_state=27) #shuffled
             return X_train, X_test, y_train, y_test
 
-    def random_forest_regression_train_test(self, X_train, X_test, y_train, y_test, n_estimators:int):
+    def random_forest_regression_train_test(self, X_train, X_test, y_train, y_test, n_estimators: int):
         '''
         Input - test and training datasets. Number of estimators for random forest algorithm
         Output - the predicted values, RMSE and the regressor object
         '''
-        regressor = RandomForestRegressor(n_estimators = n_estimators)
+        regressor = RandomForestRegressor(n_estimators=n_estimators)
         regressor.fit(X_train, y_train)
         y_pred = regressor.predict(X_test)
         RMSE = metrics.mean_squared_error(y_test, y_pred)**0.5
         return y_pred, RMSE, regressor
-
-    def random_forest_regression_predict(self, start_date_sim, end_date_sim, regressor):
-        '''
-        Input - start and end date of simulation. Trained regressor object.
-        Output - The prediction of our model over new dates 
-        Each feature being calculated with a rolling window. 
-        '''
-        dates = self.daterange(start_date_sim, end_date_sim, remove_weekends = True) #No weekends in dataframe New_Power_Next_Spot
-        for element in dates:
-            pass
-        pass
-
-
 
     @property
     def weekends(self):
