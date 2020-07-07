@@ -48,12 +48,13 @@ class Browser:
         """
         blocs = self.driver.find_elements_by_css_selector(
             "div.standard-page-block.standard-page-body")
-        self.bloc_month = blocs[-4] # Depending on the DOM architecture
-        self.bloc_season = blocs[-3] #Dependinf on the DOM architecture
+        self.bloc_month = blocs[-4]  # Depending on the DOM architecture
+        self.bloc_season = blocs[-3]  # Dependinf on the DOM architecture
         self.gnl_types_month = self.bloc_month.find_elements_by_tag_name(
             "li")  # Find all possible gnl types
         self.gnl_types_season = self.bloc_season.find_elements_by_tag_name(
             "li")  # Find all possible gnl types
+
     def table_scraper(self):
         """ Function that extract the data and all the relevant informations
         from the html code of a loaded page
@@ -122,7 +123,8 @@ class Browser:
         self.chrome_launcher(link)
         self.gnl_finder()
         # iterate on the gnl market types
-        for type_month, type_season in zip(self.gnl_types_month, self.gnl_types_season):
+        for type_month, type_season in zip(
+                self.gnl_types_month, self.gnl_types_season):
 
             if (not specific_type) or (type_season.text in specific_type):
                 # Change gnl types
@@ -151,7 +153,9 @@ class Browser:
                     print("merge")
                 yield info, active, table
             else:
-                print('not now') #if the currently active gnl_market doesn't need to be scrapped
+                # if the currently active gnl_market doesn't need to be
+                # scrapped
+                print('not now')
                 # we do nothing
 
         self.driver.quit()

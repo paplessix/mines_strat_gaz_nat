@@ -1,0 +1,1 @@
+Dans ce dossir vous trouverez le début d'une architecture client serveur pour distribuer le calcul. C'est encore une piste en construction.

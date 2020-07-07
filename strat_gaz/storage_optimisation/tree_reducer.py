@@ -1,8 +1,13 @@
+"""
+Module that reduces scenario_trees and create  a graph structure
+"""
+
+import time
+
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import time
-import networkx as nx
 
 # tree = pd.read_csv('test.csv', delimiter = ';', decimal = ',', header = 0)
 # tree = np.array(tree)
@@ -12,48 +17,60 @@ import networkx as nx
 # print(n_scen)
 
 # print('tree_prob', tree_prob)
-#print(tree)
+# print(tree)
+
+
 class Scenario_builder():
+    """Main class, se référer à l'algorithme tel que présenté dans la biblio
+    """
+
     def __init__(self):
         pass
-    
-    def data_loader_csv(self, file, header = 0):
-        tree = pd.read_csv(file, delimiter = ';', decimal = ',',header =  header)
+
+    def data_loader_csv(self, file, header=0):
+        """
+        Load csv
+        """
+        tree = pd.read_csv(file, delimiter=';', decimal=',', header=header)
         self.tree = np.array(tree)
-        self.tree_prob  = np.ones(self.n_scen)/self.n_scen
+        self.tree_prob = np.ones(self.n_scen) / self.n_scen
         # plt.plot(self.tree, color = 'b')
         # plt.show()
 
-    def data_loader_df(self,df):
+    def data_loader_df(self, df):
+        """
+        Load Data
+        """
         tree_with_head = np.array(df)
-        tree = tree_with_head[1:,:-1]
+        tree = tree_with_head[1:, :-1]
         self.tree = tree
-        self.tree_prob  = np.ones(self.n_scen)/self.n_scen
+        self.tree_prob = np.ones(self.n_scen) / self.n_scen
         plt.plot(self.tree)
         plt.xlabel('nombre d étapes')
         plt.ylabel('Prix en euro')
         plt.title('Arbres de scénarios')
         plt.show()
 
+    def distance_scen_pair(self, i, j, t_max):
+        return sum(abs(self.tree.transpose()[
+                   i][:t_max] - self.tree.transpose()[j][:t_max]))
 
-    def distance_scen_pair(self, i, j,t_max):
-        return sum(abs(self.tree.transpose()[i][:t_max]-self.tree.transpose()[j][:t_max]))
-    
-    n_scen = property(lambda self : len(self.tree[0]))
+    n_scen = property(lambda self: len(self.tree[0]))
     T = property(lambda self: len(self.tree))
+
     def mat_distance_scen(self, T_max):
         index = {i for i in range(self.n_scen)}
         C_K_J = []
         for k in range(self.n_scen):
             C_J = []
             for j in range(self.n_scen):
-                C_J.append(self.distance_scen_pair(k,j,T_max))
+                C_J.append(self.distance_scen_pair(k, j, T_max))
             C_K_J.append(C_J)
         C_K_J = np.array(C_K_J)
         self.C_K_J = C_K_J
 
-    def backward_reduction(self, n_deletion, T_max = False):
-        if T_max == False:
+    def backward_reduction(self, n_deletion, T_max=False):
+        if not T_max:
             T_max = self.T
         else:
             pass
@@ -62,65 +79,66 @@ class Scenario_builder():
         C_LL = np.zeros(self.n_scen)
         self.mat_distance_scen(T_max)
         for l in range(self.n_scen):
-            C_LL[l] = min(self.C_K_J[l][list(index.difference(J|{l}))])
-        z_L = self.tree_prob*C_LL
+            C_LL[l] = min(self.C_K_J[l][list(index.difference(J | {l}))])
+        z_L = self.tree_prob * C_LL
         l = np.argmin(z_L)
-        J = J|{l}
-        #Redondance avec l'initialisation à voir 
-        while len(J)< n_deletion:
+        J = J | {l}
+        # Redondance avec l'initialisation à voir
+        while len(J) < n_deletion:
             Z_L = []
-            for  l in index.difference(J):
+            for l in index.difference(J):
                 C_KL = []
-                for k in (J|{l}):
-                    c_kl = min(self.C_K_J[k][list(index.difference(J|{l}))])
+                for k in (J | {l}):
+                    c_kl = min(self.C_K_J[k][list(index.difference(J | {l}))])
                     C_KL.append(c_kl)
                 C_KL = np.array(C_KL)
-                z_l = sum(self.tree_prob[np.array(list(J|{l}))]*C_KL)
-                Z_L.append(z_l) # FAire des test sur la taille des listes qui sont crées
+                z_l = sum(self.tree_prob[np.array(list(J | {l}))] * C_KL)
+                # FAire des test sur la taille des listes qui sont crées
+                Z_L.append(z_l)
             l = list(index.difference(J))[np.argmin(Z_L)]
-            J = J|{l}
-        return J 
-    
+            J = J | {l}
+        return J
 
-    def backward_reduction_iter(self, index, T_max = False):
+    def backward_reduction_iter(self, index, T_max=False):
 
-        if T_max == False:
+        if not T_max:
             T_max = self.T
         else:
             pass
         J = set()
         C_LL = np.zeros(self.n_scen)
         self.mat_distance_scen(T_max)
-        while len(J)< self.n_scen:
+        while len(J) < self.n_scen:
             Z_L = []
-            for  l in index.difference(J):
+            for l in index.difference(J):
                 C_KL = []
-                for k in (J|{l}):
-                    c_kl = min(self.C_K_J[k][list(index.difference(J|{l}))])
+                for k in (J | {l}):
+                    c_kl = min(self.C_K_J[k][list(index.difference(J | {l}))])
                     C_KL.append(c_kl)
                 C_KL = np.array(C_KL)
-                z_l = sum(self.tree_prob[np.array(list(J|{l}))]*C_KL)
-                Z_L.append(z_l) # FAire des test sur la taille des listes qui sont crées
+                z_l = sum(self.tree_prob[np.array(list(J | {l}))] * C_KL)
+                # FAire des test sur la taille des listes qui sont crées
+                Z_L.append(z_l)
             l = list(index.difference(J))[np.argmin(Z_L)]
-            J = J|{l}
+            J = J | {l}
             yield J, min(Z_L)
 
-    def scenario_deletion(self, n_deletion ):
+    def scenario_deletion(self, n_deletion):
         index = {i for i in range(self.n_scen)}
         tree_prob = self.tree_prob
         b = sum(self.tree_prob)
         J = self.backward_reduction(n_deletion)
-        for i in J :
+        for i in J:
             j = np.argmin(self.C_K_J[i][list(index.difference(J))])
             j = list(index.difference(J))[j]
-            # assert not j in J : A passer en test 
+            # assert not j in J : A passer en test
             tree_prob[j] += tree_prob[i]
 
         tree_t = self.tree.transpose()[list(index.difference(J))]
         self.tree = tree_t.transpose()
         self.tree_prob = tree_prob[list(index.difference(J))]
         a = sum(self.tree_prob)
-        print(a-b)
+        print(a - b)
 
     def plot_tree(self):
         plt.plot(self.tree)
@@ -129,64 +147,62 @@ class Scenario_builder():
         plt.title('Arbres de scénarios')
         plt.show()
 
-    def scenario_tree_construction(self,epsilon):
+    def scenario_tree_construction(self, epsilon):
         index = {i for i in range(self.n_scen)}
         boundings = {}
-        for pas in range(1,self.T):
-            ## Reduction 
-            
-            iter_J = self.backward_reduction_iter(index,self.T-pas+1)
-            J,Z = next(iter_J)
+        for pas in range(1, self.T):
+            # Reduction
+
+            iter_J = self.backward_reduction_iter(index, self.T - pas + 1)
+            J, Z = next(iter_J)
             while Z < epsilon:
-                J,Z = next(iter_J)
+                J, Z = next(iter_J)
             # print('k',pas)
             # print('I',index)
             # print('J',J)
-            
+
             # scenario bundling
-            for j in J :
+            for j in J:
                 i = np.argmin(self.C_K_J[j][list(index.difference(J))])
-                i= list(index.difference(J))[i]
+                i = list(index.difference(J))[i]
                 self.tree_prob[i] += self.tree_prob[j]
-                self.tree[:self.T-pas+1,j] = self.tree[:self.T-pas+1,i]
+                self.tree[:self.T - pas + 1,
+                          j] = self.tree[:self.T - pas + 1, i]
                 transfer_bound = [j]
                 if j in boundings.keys():
                     bounds = boundings[j]
                     for q in bounds:
-                        self.tree[:self.T-pas+1,q] = self.tree[:self.T-pas+1,i]
+                        self.tree[:self.T - pas + 1,
+                                  q] = self.tree[:self.T - pas + 1, i]
                     transfer_bound.append(j)
                 if i in boundings.keys():
-                    boundings[i] = boundings[i]+transfer_bound
-                else : 
+                    boundings[i] = boundings[i] + transfer_bound
+                else:
                     boundings[i] = transfer_bound
             # plt.plot(self.tree)
             # plt.show()
-            for i in range(2,self.n_scen):
+            for i in range(2, self.n_scen):
                 pass
             index = index.difference(J)
-            if len(index) <= 1 :
+            if len(index) <= 1:
                 break
-                
+
     def nx_graph_builder(self):
         G = nx.DiGraph()
         n, m = self.tree.shape
-        G.add_node('root',price = self.tree[0,0], probability =1 )
-        for i in range (m):
+        G.add_node('root', price=self.tree[0, 0], probability=1)
+        for i in range(m):
             last_node = 'root'
-            for j in range(1,n):
-                G.add_node(f'node{i}_{j}', price = self .tree [j,i], probability  = 1/self.n_scen )
-                G.add_edge(last_node,f'node{i}_{j}')
+            for j in range(1, n):
+                G.add_node(
+                    f'node{i}_{j}', price=self .tree[j, i], probability=1 / self.n_scen)
+                G.add_edge(last_node, f'node{i}_{j}')
                 last_node = f'node{i}_{j}'
         self.graph = G
-    
+
     def plot_graph(self):
         nx.draw_shell(self.graph)
         plt.show()
-
-
-
-
-
 
 
 # builder = Scenario_builder()
