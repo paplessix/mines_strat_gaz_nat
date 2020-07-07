@@ -95,7 +95,7 @@ def data_updater(directory, price_type, specific_type=False):
             existing_data.to_csv(filename, index=False)  # save the new db
         else:
             table.to_csv(filename, index=False)  # create the DB
-
+            # ici pas le plus optimisé niveau mémoire et opérations : à améliorer
 
 def main():
     """

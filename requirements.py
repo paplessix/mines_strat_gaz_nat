@@ -10,3 +10,5 @@ sklearn
 plotly
 dash
 dash-bootstrap-components
+pylint 
+pytest

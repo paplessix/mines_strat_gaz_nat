@@ -53,11 +53,7 @@ def test_sym_mat_dist():
         mat = scen.mat_distance_scen(i)
         assert scen.C_K_J.all() == scen.C_K_J.transpose().all() 
 
-# V2rification de la loi de probabilité 
 
-# Vérification des choix de minimum --> créer des fonctions spécialisés  ? 
-
-# Verification de la terminaison de l'algorithme 
 
 
 
